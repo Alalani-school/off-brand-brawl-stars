@@ -80,7 +80,10 @@ let gameState = "MENU", winStreak = 0, selectedClass = null, animationId = null;
 let projectiles = [], enemyProjectiles = [], staticZones = [], walls = [], keys = {};
 
 let floatingTexts = [], slashes = [], screenShake = 0, mouseX = 0, mouseY = 0;
-
+let gasSize = 0;
+let roundTimer = 0;
+bot.poisonTime = 0;
+bot.poisonDps = 0;
  
 
 let player = { x: 150, y: 300, r: 26, ammo: 3, reload: 0, super: 0, isJumping: false, jumpProg: 0, hitFlash: 0, spd: 4.5 };
@@ -162,15 +165,18 @@ window.startGame = () => {
  
 
 function resetRound() {
-
     player.x = 150; player.y = 300; player.hp = player.maxHp;
-
     bot.hp = bot.maxHp = 50 + (winStreak * 25); bot.x = 800; bot.y = 300;
 
-    projectiles = []; enemyProjectiles = []; staticZones = []; slashes = [];
-
+    projectiles = [];
+    enemyProjectiles = [];
+    staticZones = [];
+    slashes = [];
+    gasSize = 0;
+    roundTimer = 0;
+    bot.poisonTime = 0;
+    bot.poisonDps = 0;
 }
-
  
 
 window.backToMenu = () => {
@@ -292,97 +298,106 @@ function hitEnemy(dmg) {
  
 
 function triggerSuper() {
-
     if (player.super < 100 || player.isJumping || gameState !== "PLAYING") return;
-
-    const ang = Math.atan2(mouseY - player.y, mouseX - player.x);
 
     player.super = 0;
 
+    const ang = Math.atan2(mouseY - player.y, mouseX - player.x);
     screenShake = 15;
 
-   
+    // --- UPDATED SUPER LOGIC ADDED ---
+    if (selectedClass === "Colt") {
+        for (let i = 0; i < 12; i++) {
+            setTimeout(() => {
+                spawnBullet(player.x, player.y, ang, 16, "#fff", 8, 60, 8);
+            }, i * 50);
+        }
+    }
 
-    if (selectedClass === 'Emz') {
+    else if (selectedClass === "Crow") {
+        // Jump to cursor and spray daggers
+        player.x = Math.max(60, Math.min(890, mouseX));
+        player.y = Math.max(60, Math.min(540, mouseY));
 
+        for (let a = 0; a < Math.PI * 2; a += 0.4) {
+            projectiles.push({
+                x: player.x, y: player.y,
+                vx: Math.cos(a) * 12, vy: Math.sin(a) * 12,
+                life: 30, dmg: 5, size: 5, clr: "#2ecc71",
+                isPoison: true
+            });
+        }
+    }
+
+    else if (selectedClass === "Spike") {
+        // Create a damage zone at cursor
+        staticZones.push({
+            x: mouseX, y: mouseY,
+            r: 120, life: 240,
+            clr: "rgba(39, 174, 96, 0.4)",
+            dmg: 0.5,
+            isSpikeSuper: true
+        });
+    }
+
+    else if (selectedClass === "Shelly") {
+        for (let i = -0.8; i <= 0.8001; i += 0.15) {
+            projectiles.push({
+                x: player.x, y: player.y,
+                vx: Math.cos(ang + i) * 13, vy: Math.sin(ang + i) * 13,
+                life: 35, dmg: 18, size: 10, clr: "orange"
+            });
+        }
+    }
+
+    // --- keep your existing supers for the other classes ---
+    else if (selectedClass === 'Emz') {
         staticZones.push({ x: player.x, y: player.y, r: 230, clr: 'rgba(108, 92, 231, 0.4)', life: 200, dmg: 4, followPlayer: true });
-
     }
-
     else if (selectedClass === 'Mortis') {
-
         spawnBullet(player.x, player.y, ang, 12, '#a29bfe', 30, 60, 35, {isMortisSuper: true});
-
     }
-
     else if (selectedClass === 'Poco') {
-
         for(let i=-1.2; i<=1.2; i+=0.2) spawnBullet(player.x, player.y, ang+i, 9, '#00ff00', 0, 40, 30, {isHeal: true});
-
         player.hp = Math.min(player.maxHp, player.hp + 50);
-
     }
-
-    else if (['Piper', 'Crow', 'Edgar', 'Primo'].includes(selectedClass)) {
-
+    else if (['Piper', 'Edgar', 'Primo'].includes(selectedClass)) {
         player.isJumping = true; player.jumpProg = 0;
 
-        const sX = player.x, sY = player.y, tX = Math.max(60, Math.min(890, mouseX)), tY = Math.max(60, Math.min(540, mouseY));
-
-       
+        const sX = player.x, sY = player.y,
+              tX = Math.max(60, Math.min(890, mouseX)),
+              tY = Math.max(60, Math.min(540, mouseY));
 
         // PIPER BOMB DROP
-
         if(selectedClass === 'Piper') {
-
-             for(let i=0; i<4; i++) {
-
+            for(let i=0; i<4; i++) {
                 setTimeout(() => {
-
                     staticZones.push({ x: sX + rnd(-30,30), y: sY + rnd(-30,30), r: 80, clr: '#000', life: 40, dmg: 25, isBomb: true });
-
                 }, i*50);
-
-             }
-
+            }
         }
 
- 
-
         let jInt = setInterval(() => {
-
             player.jumpProg += 0.04;
-
-            player.x = sX + (tX - sX) * player.jumpProg; player.y = sY + (tY - sY) * player.jumpProg;
+            player.x = sX + (tX - sX) * player.jumpProg;
+            player.y = sY + (tY - sY) * player.jumpProg;
 
             if (player.jumpProg >= 1) {
-
-                clearInterval(jInt); player.isJumping = false; screenShake = 25;
-
-               
-
-                // ANTI-WALL GLITCH LOGIC
+                clearInterval(jInt);
+                player.isJumping = false;
+                screenShake = 25;
 
                 if(checkWall(player.x, player.y, player.r)) {
-
                     let safe = findSafeSpot(player.x, player.y);
-
                     player.x = safe.x; player.y = safe.y;
-
                 }
 
- 
-
-                if (selectedClass === 'Primo') { if (Math.hypot(player.x-bot.x, player.y-bot.y)<140) hitEnemy(50); }
-
+                if (selectedClass === 'Primo') {
+                    if (Math.hypot(player.x-bot.x, player.y-bot.y)<140) hitEnemy(50);
+                }
             }
-
         }, 20);
-
     }
-
-    else if (selectedClass === 'Shelly') { for(let i=-1; i<=1; i+=0.12) spawnBullet(player.x, player.y, ang+i, 16, '#f0f', 15, 38, 12); }
-
 }
 
  
@@ -432,6 +447,12 @@ function gameLoop() {
  
 
 function update() {
+roundTimer += 1/60;
+if (roundTimer > 4) gasSize += 0.15;
+if (bot.poisonTime > 0) {
+    bot.hp -= bot.poisonDps;
+    bot.poisonTime--;
+}
 
     if (selectedClass === 'Edgar') player.super = Math.min(100, player.super + 0.08);
 
@@ -447,7 +468,8 @@ function update() {
 
     }
 
-    let bvx = (bot.targetX - bot.x)*0.045, bvy = (bot.targetY - bot.y)*0.045;
+    let bvx = (bot.targetX - bot.x)*0.045 * botSlow;
+    let bvy = (bot.targetY - bot.y)*0.045 * botSlow;
 
     if (!checkWall(bot.x + bvx, bot.y, bot.r)) bot.x += bvx;
 
@@ -483,21 +505,29 @@ function update() {
 
    
 
-    staticZones.forEach(z => {
+    let botSlow = 1;
 
-        if (z.followPlayer) { z.x = player.x; z.y = player.y; }
+staticZones.forEach(z => {
+    if (z.followPlayer) { z.x = player.x; z.y = player.y; }
 
-        if(Math.hypot(bot.x-z.x, bot.y-z.y) < z.r) {
+    const inside = Math.hypot(bot.x - z.x, bot.y - z.y) < z.r;
 
-            if(z.isBomb && z.life === 1) hitEnemy(z.dmg); // Piper Super Explodes
+    // Spike super: constant damage + slow
+    if (z.isSpikeSuper && inside) {
+        bot.hp -= z.dmg;
+        botSlow = Math.min(botSlow, 0.6);
+    }
 
-            else if (!z.isBomb && z.life % 15 === 0) hitEnemy(z.dmg);
+    // existing bomb + periodic zone logic
+    if (inside) {
+        if (z.isBomb && z.life === 1) hitEnemy(z.dmg);
+        else if (!z.isBomb && !z.isSpikeSuper && z.life % 15 === 0) hitEnemy(z.dmg);
+    }
 
-        }
+    z.life--;
+});
 
-        z.life--;
-
-    });
+staticZones = staticZones.filter(z => z.life > 0);
 
     staticZones = staticZones.filter(z => z.life > 0);
 
