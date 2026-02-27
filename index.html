@@ -5,39 +5,131 @@
   </head>
   <body>
     <script>
-      // 1. UI SETUP
+      // 1. UI SETUP (STYLIZED MENU)
 
 document.body.innerHTML = `
 
     <style>
 
-        body { margin: 0; background: #0b0e11; color: white; font-family: 'Arial Black', sans-serif; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        @keyframes gradientBG { 0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;} }
 
-        #menu { text-align: center; background: rgba(0,0,0,0.9); padding: 25px; border-radius: 30px; border: 6px solid #ffcc00; z-index: 10; width: 850px; box-shadow: 0 0 50px #000; }
+        body {
 
-        .brawler-grid { display: flex; gap: 8px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
+            margin: 0;
 
-        .card { background: #2c3e50; padding: 10px; border-radius: 15px; cursor: pointer; border: 4px solid transparent; width: 115px; transition: 0.1s; font-size: 13px; }
+            background: linear-gradient(-45deg, #0b0e11, #1a1c20, #0b0e11, #2c3e50);
 
-        .card:hover { transform: scale(1.1); background: #34495e; }
+            background-size: 400% 400%;
 
-        .card.selected { border-color: #00ff00; background: #1b4d3e; box-shadow: 0 0 20px #00ff00; }
+            animation: gradientBG 15s ease infinite;
 
-        .btn { background: #ffcc00; color: #000; padding: 15px 50px; border: none; font-size: 24px; cursor: pointer; border-radius: 12px; font-weight: bold; margin-top: 15px; }
+            color: white;
+
+            font-family: 'Arial Black', sans-serif;
+
+            overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh;
+
+        }
+
+        #menu {
+
+            text-align: center;
+
+            background: rgba(15, 15, 15, 0.85);
+
+            backdrop-filter: blur(15px);
+
+            padding: 30px 40px;
+
+            border-radius: 40px;
+
+            border: 4px solid rgba(255, 204, 0, 0.3);
+
+            z-index: 10;
+
+            width: 880px;
+
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,204,0,0.1);
+
+        }
+
+        .brawler-grid { display: flex; gap: 12px; justify-content: center; margin: 15px 0 25px 0; flex-wrap: wrap; }
+
+        .card {
+
+            background: rgba(44, 62, 80, 0.6); padding: 10px; border-radius: 15px;
+
+            cursor: pointer; border: 3px solid rgba(255,255,255,0.1); width: 110px;
+
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); font-size: 13px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+
+        }
+
+        .card:hover { transform: translateY(-5px) scale(1.05); background: #34495e; border-color: #ffcc00; }
+
+        .card.selected { border-color: #00ff00; background: #1b4d3e; box-shadow: 0 0 25px rgba(0, 255, 0, 0.4); transform: scale(1.1); }
+
+       
+
+        .map-btn {
+
+            background: #2c3e50; color: white; border: 3px solid #555; padding: 12px 25px; border-radius: 10px;
+
+            font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s;
+
+        }
+
+        .map-btn:hover { background: #34495e; }
+
+        .map-btn.selected { border-color: #3498db; background: #2980b9; box-shadow: 0 0 20px rgba(52, 152, 219, 0.5); }
+
+ 
+
+        .btn {
+
+            background: linear-gradient(180deg, #ffe066 0%, #ffcc00 100%); color: #2c3e50;
+
+            padding: 15px 50px; border: none; font-size: 24px; cursor: pointer; border-radius: 15px;
+
+            font-weight: 900; margin-top: 25px; text-transform: uppercase; letter-spacing: 2px;
+
+            box-shadow: 0 5px 0 #b38f00, 0 10px 20px rgba(0,0,0,0.3); transition: all 0.1s;
+
+        }
+
+        .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #b38f00; }
+
+       
 
         #hud { position: absolute; top: 25px; display: none; gap: 40px; font-size: 24px; z-index: 5; background: rgba(0,0,0,0.85); padding: 12px 30px; border-radius: 25px; border: 3px solid #555; }
 
         #exit-btn { position: absolute; top: 25px; right: 25px; display: none; background: #e74c3c; color: white; border: none; padding: 12px 25px; font-size: 18px; border-radius: 10px; cursor: pointer; font-weight: bold; z-index: 100; }
 
-        canvas { border: 12px solid #1a1a1a; background: #3a7d44; display: none; border-radius: 25px; box-shadow: 0 0 80px #000; cursor: crosshair; }
+        canvas { border: 12px solid #1a1a1a; display: none; border-radius: 25px; box-shadow: 0 0 80px #000; cursor: crosshair; }
 
     </style>
 
     <div id="menu">
 
-        <h1 style="color:#ffcc00; font-size: 40px; margin: 0;">BRAWLER SELECT</h1>
+        <h1 style="color:#ffcc00; font-size: 45px; margin: 0; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">BRAWLER SELECT</h1>
+
+       
 
         <div class="brawler-grid" id="grid"></div>
+
+       
+
+        <h2 style="color: #bdc3c7; font-size: 20px; margin: 5px 0 15px 0;">CHOOSE YOUR MAP</h2>
+
+        <div style="display: flex; gap: 15px; justify-content: center;">
+
+            <button class="map-btn selected" id="map-arena" onclick="selectMap('Arena', this)">🏟️ THE ARENA</button>
+
+            <button class="map-btn" id="map-crossroads" onclick="selectMap('Crossroads', this)">⚔️ CROSSROADS</button>
+
+        </div>
+
+ 
 
         <button class="btn" id="startBtn" onclick="startGame()" style="opacity: 0.5; pointer-events: none;">BATTLE!</button>
 
@@ -45,15 +137,7 @@ document.body.innerHTML = `
 
     <button id="exit-btn" onclick="backToMenu()">MENU ☰</button>
 
-    <div id="hud">
-
-        <div id="p-hp" style="color:#2ecc71">HP: --</div>
-
-        <div id="streak-ui" style="color:#f1c40f">WINS: 0</div>
-
-        <div id="super-ui" style="color:#e74c3c">SUPER: 0%</div>
-
-    </div>
+    <div id="hud"><div id="streak-ui" style="color:#f1c40f">WINS: 0</div></div>
 
     <canvas id="gameCanvas" width="950" height="600"></canvas>
 
@@ -61,38 +145,55 @@ document.body.innerHTML = `
 
  
 
-const brawlers = [{n:'Shelly', i:'🤠'}, {n:'Primo', i:'🥊'}, {n:'Colt', i:'🔫'}, {n:'Poco', i:'🎸'}, {n:'Edgar', i:'🧣'}, {n:'Crow', i:'🐦'}, {n:'Mortis', i:'🦇'}, {n:'Piper', i:'☂️'}, {n:'Spike', i:'🌵'}, {n:'Emz', i:'🤳'}];
+const brawlers = [
 
-brawlers.forEach(b => {
+    {n:'Shelly', i:'🤠'}, {n:'Primo', i:'🥊'}, {n:'Colt', i:'🔫'},
 
-    const d = document.createElement('div'); d.className = 'card'; d.innerHTML = `<h3>${b.i} ${b.n}</h3>`;
+    {n:'Poco', i:'🎸'}, {n:'Edgar', i:'🧣'}, {n:'Crow', i:'🐦'},
 
-    d.onclick = () => selectBrawler(b.n, d); document.getElementById('grid').appendChild(d);
+    {n:'Mortis', i:'🦇'}, {n:'Piper', i:'☂️'}, {n:'Spike', i:'🌵'}, {n:'Emz', i:'🤳'},
 
-});
+    {n:'AMAAN', i:'👑'}, {n:'Duck', i:'🦆'}
+
+];
 
  
 
-const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
+const canvas = document.getElementById('gameCanvas');
 
-let gameState = "MENU", winStreak = 0, selectedClass = null, animationId = null;
+const ctx = canvas.getContext('2d');
+
+let gameState = "MENU", winStreak = 0, selectedClass = null, selectedMapId = 'Arena', animationId = null;
 
 let projectiles = [], enemyProjectiles = [], staticZones = [], walls = [], keys = {};
 
 let floatingTexts = [], slashes = [], screenShake = 0, mouseX = 0, mouseY = 0;
-let gasSize = 0;
-let roundTimer = 0;
-bot.poisonTime = 0;
-bot.poisonDps = 0;
+
  
 
-let player = { x: 150, y: 300, r: 26, ammo: 3, reload: 0, super: 0, isJumping: false, jumpProg: 0, hitFlash: 0, spd: 4.5 };
+let player = { x: 150, y: 300, r: 24, ammo: 3, reload: 0, super: 0, isJumping: false, jumpProg: 0, hitFlash: 0, spd: 4.5 };
 
-let bot = { x: 800, y: 300, r: 26, hp: 50, maxHp: 50, moveTimer: 0, shootTimer: 0, targetX: 800, targetY: 300, hitFlash: 0 };
+let bot = { x: 800, y: 300, r: 24, hp: 100, maxHp: 100, moveTimer: 0, shootTimer: 0, targetX: 800, targetY: 300, hitFlash: 0, poison: 0 };
 
  
 
 const rnd = (min, max) => Math.random() * (max - min) + min;
+
+ 
+
+// Grid Generation
+
+brawlers.forEach(b => {
+
+    const d = document.createElement('div');
+
+    d.className = 'card'; d.innerHTML = `<h3>${b.i} ${b.n}</h3>`;
+
+    d.onclick = () => selectBrawler(b.n, d);
+
+    document.getElementById('grid').appendChild(d);
+
+});
 
  
 
@@ -107,6 +208,58 @@ window.selectBrawler = (name, el) => {
     document.getElementById('startBtn').style.opacity = "1";
 
     document.getElementById('startBtn').style.pointerEvents = "auto";
+
+};
+
+ 
+
+window.selectMap = (mapName, el) => {
+
+    selectedMapId = mapName;
+
+    document.querySelectorAll('.map-btn').forEach(b => b.classList.remove('selected'));
+
+    el.classList.add('selected');
+
+};
+
+ 
+
+const mapData = {
+
+    Arena: {
+
+        bg: '#576574',
+
+        wallColor: '#222f3e',
+
+        walls: [
+
+            {x: 200, y: 100, w: 80, h: 80}, {x: 200, y: 420, w: 80, h: 80},
+
+            {x: 670, y: 100, w: 80, h: 80}, {x: 670, y: 420, w: 80, h: 80},
+
+            {x: 400, y: 225, w: 150, h: 150}
+
+        ]
+
+    },
+
+    Crossroads: {
+
+        bg: '#4cd137',
+
+        wallColor: '#8c7ae6',
+
+        walls: [
+
+            {x: 445, y: 0, w: 60, h: 180}, {x: 445, y: 420, w: 60, h: 180},
+
+            {x: 250, y: 150, w: 450, h: 40}, {x: 250, y: 410, w: 450, h: 40}
+
+        ]
+
+    }
 
 };
 
@@ -128,33 +281,37 @@ window.startGame = () => {
 
     const stats = {
 
-        Shelly: { hp: 100, spd: 4.6, clr: '#3498db', dmg: 7, rel: 45, chrg: 7 },
+        Shelly: { hp: 100, spd: 4.6, clr: '#3498db', dmg: 7, rel: 45, chrg: 12 },
 
-        Primo:  { hp: 240, spd: 4.4, clr: '#f39c12', dmg: 16, rel: 35, chrg: 9 },
+        Primo:  { hp: 220, spd: 4.4, clr: '#f39c12', dmg: 16, rel: 35, chrg: 15 },
 
-        Colt:   { hp: 80,  spd: 5.6, clr: '#e74c3c', dmg: 5,  rel: 55, chrg: 4 },
+        Colt:   { hp: 80,  spd: 5.6, clr: '#e74c3c', dmg: 5,  rel: 55, chrg: 6 },
 
-        Poco:   { hp: 120, spd: 4.8, clr: '#9b59b6', dmg: 5.5, rel: 55, chrg: 8 },
+        Poco:   { hp: 120, spd: 4.8, clr: '#9b59b6', dmg: 8,  rel: 55, chrg: 14 },
 
-        Edgar:  { hp: 95,  spd: 5.8, clr: '#34495e', dmg: 13, rel: 22, chrg: 11 },
+        Edgar:  { hp: 95,  spd: 5.8, clr: '#34495e', dmg: 13, rel: 22, chrg: 18 },
 
-        Crow:   { hp: 75,  spd: 5.8, clr: '#2c3e50', dmg: 4,  rel: 42, chrg: 6 },
+        Crow:   { hp: 75,  spd: 5.8, clr: '#2c3e50', dmg: 3,  rel: 42, chrg: 10 },
 
-        Mortis: { hp: 170, spd: 5.5, clr: '#8e44ad', dmg: 14, rel: 60, chrg: 20 },
+        Mortis: { hp: 170, spd: 5.5, clr: '#8e44ad', dmg: 26, rel: 60, chrg: 25 },
 
-        Piper:  { hp: 70,  spd: 4.6, clr: '#3498db', dmg: 14, rel: 70, chrg: 25 },
+        Piper:  { hp: 70,  spd: 4.6, clr: '#3498db', dmg: 16, rel: 70, chrg: 30 },
 
-        Spike:  { hp: 75,  spd: 4.6, clr: '#27ae60', dmg: 11, rel: 55, chrg: 12 },
+        Spike:  { hp: 75,  spd: 4.6, clr: '#27ae60', dmg: 11, rel: 55, chrg: 20 },
 
-        Emz:    { hp: 110, spd: 4.6, clr: '#a29bfe', dmg: 3.7, rel: 50, chrg: 10 }
+        Emz:    { hp: 110, spd: 4.5, clr: '#a29bfe', dmg: 6,  rel: 50, chrg: 15 },
+
+        AMAAN:  { hp: 999, spd: 7.5, clr: '#f1c40f', dmg: 45, rel: 10, chrg: 35 },
+
+        Duck:   { hp: 85,  spd: 5.2, clr: '#f1c40f', dmg: 6,  rel: 40, chrg: 12 }
 
     }[selectedClass];
 
    
 
-    Object.assign(player, { ...stats, maxHp: stats.hp, super: 0 });
+    Object.assign(player, { ...stats, maxHp: stats.hp, hp: stats.hp, super: 0, ammo: 3 });
 
-    walls = [{x: 220, y: 180, w: 60, h: 140}, {x: 670, y: 280, w: 60, h: 140}, {x: 445, y: 60, w: 60, h: 180}, {x: 445, y: 360, w: 60, h: 180}];
+    walls = mapData[selectedMapId].walls;
 
     resetRound();
 
@@ -165,18 +322,19 @@ window.startGame = () => {
  
 
 function resetRound() {
-    player.x = 150; player.y = 300; player.hp = player.maxHp;
-    bot.hp = bot.maxHp = 50 + (winStreak * 25); bot.x = 800; bot.y = 300;
 
-    projectiles = [];
-    enemyProjectiles = [];
-    staticZones = [];
-    slashes = [];
-    gasSize = 0;
-    roundTimer = 0;
-    bot.poisonTime = 0;
-    bot.poisonDps = 0;
+    player.x = 150; player.y = 300; player.hp = player.maxHp;
+
+    bot.maxHp = 100 + (winStreak * 80);
+
+    bot.hp = bot.maxHp;
+
+    bot.x = 800; bot.y = 300; bot.poison = 0;
+
+    projectiles = []; enemyProjectiles = []; staticZones = []; slashes = [];
+
 }
+
  
 
 window.backToMenu = () => {
@@ -187,7 +345,9 @@ window.backToMenu = () => {
 
     document.getElementById('menu').style.display = "block";
 
-    canvas.style.display = "none"; document.getElementById('hud').style.display = "none";
+    canvas.style.display = "none";
+
+    document.getElementById('hud').style.display = "none";
 
     document.getElementById('exit-btn').style.display = "none";
 
@@ -199,21 +359,45 @@ canvas.onmousemove = (e) => { const r = canvas.getBoundingClientRect(); mouseX =
 
  
 
+function checkWall(x, y, r) {
+
+    return walls.some(w => x + r > w.x && x - r < w.x + w.w && y + r > w.y && y - r < w.y + w.h);
+
+}
+
+ 
+
 canvas.onclick = () => {
 
-    if (player.ammo <= 0 || player.isJumping || gameState !== "PLAYING") return;
+    if (player.ammo < 1 || player.isJumping || gameState !== "PLAYING") return;
 
     const ang = Math.atan2(mouseY - player.y, mouseX - player.x);
 
    
 
-    if (['Primo', 'Edgar'].includes(selectedClass)) { performMelee(ang); }
+    if (['Primo', 'Edgar', 'AMAAN'].includes(selectedClass)) {
+
+        const range = 60;
+
+        slashes.push({x: player.x, y: player.y, ang: ang, life: 12, r: range, clr: 'rgba(255,0,0,0.3)'});
+
+        const dist = Math.hypot(player.x - bot.x, player.y - bot.y);
+
+        const angToBot = Math.atan2(bot.y - player.y, bot.x - player.x);
+
+        let diff = Math.abs(ang - angToBot);
+
+        while (diff > Math.PI) diff = Math.abs(diff - Math.PI * 2);
+
+        if (dist < range + 20 && diff < 1.1) hitEnemy(player.dmg);
+
+    }
 
     else if (selectedClass === 'Mortis') {
 
-        let nx = player.x + Math.cos(ang) * 115, ny = player.y + Math.sin(ang) * 115;
+        let nx = player.x + Math.cos(ang) * 125, ny = player.y + Math.sin(ang) * 125;
 
-        if (!checkWall(nx, ny, 20)) { player.x = nx; player.y = ny; }
+        if (!checkWall(nx, ny, 20) && nx > 30 && nx < 920 && ny > 30 && ny < 570) { player.x = nx; player.y = ny; }
 
         if (Math.hypot(player.x - bot.x, player.y - bot.y) < 85) hitEnemy(player.dmg);
 
@@ -223,204 +407,225 @@ canvas.onclick = () => {
 
     else if (selectedClass === 'Emz') {
 
-        for(let i=1; i<=3; i++) {
-
-            const cloudX = player.x + Math.cos(ang)*(i*60);
-
-            const cloudY = player.y + Math.sin(ang)*(i*60);
-
-            if (!checkWall(cloudX, cloudY, 15)) {
-
-                setTimeout(() => {
-
-                    staticZones.push({ x: cloudX, y: cloudY, r: 55, clr: 'rgba(162, 155, 254, 0.7)', life: 30, dmg: player.dmg, isSpray: true });
-
-                }, i*40);
-
-            } else { break; }
-
-        }
+        for(let i=-0.3; i<=0.3; i+=0.15) spawnBullet(player.x, player.y, ang+i, 7, 'rgba(162, 155, 254, 0.6)', player.dmg, 45, 25);
 
     }
 
-    else if (selectedClass === 'Poco') { for(let i=-0.6; i<=0.6; i+=0.15) spawnBullet(player.x, player.y, ang+i, 10, '#d1ff00', player.dmg, 28, 18); }
+    else if (selectedClass === 'Crow') {
+
+        for(let i=-0.25; i<=0.25; i+=0.25) spawnBullet(player.x, player.y, ang+i, 15, '#2ecc71', player.dmg, 35, 7, {isPoison: true});
+
+    }
 
     else if (selectedClass === 'Spike') spawnBullet(player.x, player.y, ang, 14, '#27ae60', player.dmg, 45, 18, {isSpike: true});
 
-    else if (selectedClass === 'Shelly') { for(let i=-0.4; i<=0.4; i+=0.2) spawnBullet(player.x, player.y, ang+i, 13, '#ff0', player.dmg, 25, 8); }
+    else if (selectedClass === 'Colt') {
 
-    else if (selectedClass === 'Colt') { for(let i=0; i<6; i++) setTimeout(() => spawnBullet(player.x, player.y, ang, 18, '#fff', player.dmg, 50, 7), i*80); }
+        for(let i=0; i<6; i++) setTimeout(() => spawnBullet(player.x, player.y, ang, 18, '#fff', player.dmg, 50, 7), i*80);
 
-    else if (selectedClass === 'Crow') { for(let i=-0.25; i<=0.25; i+=0.25) spawnBullet(player.x, player.y, ang+i, 15, '#e74c3c', player.dmg, 35, 7, {isCrow: true}); }
+    }
 
-    else if (selectedClass === 'Piper') spawnBullet(player.x, player.y, ang, 24, '#fff', player.dmg, 60, 6, {isPiper: true});
+    else if (selectedClass === 'Shelly') {
+
+        for(let i=-0.4; i<=0.4; i+=0.2) spawnBullet(player.x, player.y, ang+i, 13, '#ff0', player.dmg, 25, 8);
+
+    }
+
+    else if (selectedClass === 'Duck') {
+
+        for(let i=0; i<5; i++) spawnBullet(player.x, player.y, Math.random() * Math.PI * 2, 12, '#3498db', player.dmg, 40, 6);
+
+    }
+
+    else {
+
+        spawnBullet(player.x, player.y, ang, 15, player.clr, player.dmg, 50, 10);
+
+    }
 
  
 
-    player.ammo--; player.reload = player.rel;
+    player.ammo -= 1; player.reload = player.rel;
 
 };
 
  
 
-function performMelee(ang) {
-
-    const range = 110;
-
-    slashes.push({x: player.x, y: player.y, ang: ang, life: 12, r: range, clr: 'rgba(255,0,0,0.3)'});
-
-    const dist = Math.hypot(player.x - bot.x, player.y - bot.y);
-
-    const angToBot = Math.atan2(bot.y - player.y, bot.x - player.x);
-
-    let diff = Math.abs(ang - angToBot);
-
-    while (diff > Math.PI) diff = Math.abs(diff - Math.PI * 2);
-
-    if (dist < range + 20 && diff < 1.1) { hitEnemy(player.dmg); }
-
-}
-
- 
-
-function hitEnemy(dmg) {
+function hitEnemy(dmg, isPoison = false) {
 
     bot.hp -= dmg; bot.hitFlash = 6;
 
-    player.super = Math.min(100, player.super + player.chrg);
+    if (!isPoison) player.super = Math.min(100, player.super + player.chrg);
 
-    createFloatingText(bot.x, bot.y - 40, dmg.toFixed(1), "#ff0");
+    createFloatingText(bot.x, bot.y - 40, Math.round(dmg), isPoison ? "#2ecc71" : "#ff0");
 
-    screenShake = Math.max(screenShake, dmg * 0.4);
+    if (!isPoison) screenShake = 6;
 
 }
 
  
 
 function triggerSuper() {
+
     if (player.super < 100 || player.isJumping || gameState !== "PLAYING") return;
+
+    const ang = Math.atan2(mouseY - player.y, mouseX - player.x);
 
     player.super = 0;
 
-    const ang = Math.atan2(mouseY - player.y, mouseX - player.x);
-    screenShake = 15;
+ 
 
-    // --- UPDATED SUPER LOGIC ADDED ---
-    if (selectedClass === "Colt") {
-        for (let i = 0; i < 12; i++) {
-            setTimeout(() => {
-                spawnBullet(player.x, player.y, ang, 16, "#fff", 8, 60, 8);
-            }, i * 50);
+    if (selectedClass === 'AMAAN') {
+
+        let chance = Math.random();
+
+        // 35% Void Beam, 30% Uppercut, 35% Kick
+
+        if (chance < 0.35) {
+
+            createFloatingText(player.x, player.y - 60, "AMAAN KICK!!", "#f1c40f");
+
+            slashes.push({x: player.x, y: player.y, ang: ang, life: 25, r: 250, clr: 'rgba(255, 215, 0, 0.9)'});
+
+            if (Math.hypot(player.x - bot.x, player.y - bot.y) < 260) hitEnemy(250);
+
+        } else if (chance < 0.65) {
+
+            createFloatingText(player.x, player.y - 60, "GOD UPPERCUT!!", "#ff4500");
+
+            screenShake = 30;
+
+            if (Math.hypot(player.x - bot.x, player.y - bot.y) < 200) hitEnemy(300);
+
+        } else {
+
+            createFloatingText(player.x, player.y - 80, "AMAAN: VOID BEAM!!!", "#fff");
+
+            screenShake = 60;
+
+            staticZones.push({ x: player.x + Math.cos(ang)*250, y: player.y + Math.sin(ang)*250, r: 350, clr: 'rgba(255, 255, 255, 0.8)', life: 120, dmg: 15, isPulling: true });
+
         }
+
     }
 
-    else if (selectedClass === "Crow") {
-        // Jump to cursor and spray daggers
-        player.x = Math.max(60, Math.min(890, mouseX));
-        player.y = Math.max(60, Math.min(540, mouseY));
+    else if (selectedClass === 'Duck') {
 
-        for (let a = 0; a < Math.PI * 2; a += 0.4) {
-            projectiles.push({
-                x: player.x, y: player.y,
-                vx: Math.cos(a) * 12, vy: Math.sin(a) * 12,
-                life: 30, dmg: 5, size: 5, clr: "#2ecc71",
-                isPoison: true
-            });
-        }
+        createFloatingText(player.x, player.y - 60, "10 MILLION PECKS!", "#fff");
+
+        screenShake = 15;
+
+        let step = (Math.PI * 2) / 20;
+
+        for(let i=0; i<Math.PI*2; i+=step) spawnBullet(player.x, player.y, i, 16, '#e67e22', 12, 35, 5);
+
     }
 
-    else if (selectedClass === "Spike") {
-        // Create a damage zone at cursor
-        staticZones.push({
-            x: mouseX, y: mouseY,
-            r: 120, life: 240,
-            clr: "rgba(39, 174, 96, 0.4)",
-            dmg: 0.5,
-            isSpikeSuper: true
-        });
+    else if (selectedClass === 'Colt') {
+
+        for(let i=0; i<12; i++) setTimeout(() => spawnBullet(player.x, player.y, ang, 22, '#fff', 8, 60, 12), i*50);
+
     }
 
-    else if (selectedClass === "Shelly") {
-        for (let i = -0.8; i <= 0.8001; i += 0.15) {
-            projectiles.push({
-                x: player.x, y: player.y,
-                vx: Math.cos(ang + i) * 13, vy: Math.sin(ang + i) * 13,
-                life: 35, dmg: 18, size: 10, clr: "orange"
-            });
-        }
-    }
-
-    // --- keep your existing supers for the other classes ---
-    else if (selectedClass === 'Emz') {
-        staticZones.push({ x: player.x, y: player.y, r: 230, clr: 'rgba(108, 92, 231, 0.4)', life: 200, dmg: 4, followPlayer: true });
-    }
     else if (selectedClass === 'Mortis') {
-        spawnBullet(player.x, player.y, ang, 12, '#a29bfe', 30, 60, 35, {isMortisSuper: true});
+
+        spawnBullet(player.x, player.y, ang, 12, '#a29bfe', 30, 80, 40, {isBat: true});
+
     }
+
+    else if (selectedClass === 'Emz') {
+
+        staticZones.push({ x: player.x, y: player.y, r: 150, clr: 'rgba(162, 155, 254, 0.3)', life: 250, dmg: 0.8, follow: true });
+
+    }
+
     else if (selectedClass === 'Poco') {
-        for(let i=-1.2; i<=1.2; i+=0.2) spawnBullet(player.x, player.y, ang+i, 9, '#00ff00', 0, 40, 30, {isHeal: true});
-        player.hp = Math.min(player.maxHp, player.hp + 50);
+
+        player.hp = Math.min(player.maxHp, player.hp + 60);
+
+        createFloatingText(player.x, player.y - 40, "HEAL!", "#0f0");
+
     }
-    else if (['Piper', 'Edgar', 'Primo'].includes(selectedClass)) {
-        player.isJumping = true; player.jumpProg = 0;
 
-        const sX = player.x, sY = player.y,
-              tX = Math.max(60, Math.min(890, mouseX)),
-              tY = Math.max(60, Math.min(540, mouseY));
+    else if (selectedClass === 'Spike') {
 
-        // PIPER BOMB DROP
-        if(selectedClass === 'Piper') {
-            for(let i=0; i<4; i++) {
-                setTimeout(() => {
-                    staticZones.push({ x: sX + rnd(-30,30), y: sY + rnd(-30,30), r: 80, clr: '#000', life: 40, dmg: 25, isBomb: true });
-                }, i*50);
-            }
-        }
+        staticZones.push({ x: mouseX, y: mouseY, r: 160, clr: 'rgba(39, 174, 96, 0.6)', life: 300, dmg: 2 });
 
-        let jInt = setInterval(() => {
-            player.jumpProg += 0.04;
-            player.x = sX + (tX - sX) * player.jumpProg;
-            player.y = sY + (tY - sY) * player.jumpProg;
+    }
 
-            if (player.jumpProg >= 1) {
-                clearInterval(jInt);
-                player.isJumping = false;
-                screenShake = 25;
+    else if (['Piper', 'Crow', 'Edgar', 'Primo', 'Shelly'].includes(selectedClass)) {
 
-                if(checkWall(player.x, player.y, player.r)) {
-                    let safe = findSafeSpot(player.x, player.y);
-                    player.x = safe.x; player.y = safe.y;
+        if (selectedClass === 'Shelly') {
+
+            screenShake = 25; for(let i=-1; i<=1; i+=0.12) spawnBullet(player.x, player.y, ang+i, 16, '#f0f', 15, 38, 12);
+
+        } else {
+
+            player.isJumping = true; player.jumpProg = 0;
+
+            const sX = player.x, sY = player.y;
+
+            let tX = Math.max(60, Math.min(890, mouseX));
+
+            let tY = Math.max(60, Math.min(540, mouseY));
+
+           
+
+            if (checkWall(tX, tY, player.r)) {
+
+                let foundSpot = false;
+
+                for (let dist = 10; dist <= 100 && !foundSpot; dist += 10) {
+
+                    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
+
+                        let checkX = tX + Math.cos(angle) * dist;
+
+                        let checkY = tY + Math.sin(angle) * dist;
+
+                        if (!checkWall(checkX, checkY, player.r) && checkX > 30 && checkX < 920 && checkY > 30 && checkY < 570) {
+
+                            tX = checkX; tY = checkY; foundSpot = true; break;
+
+                        }
+
+                    }
+
                 }
 
-                if (selectedClass === 'Primo') {
-                    if (Math.hypot(player.x-bot.x, player.y-bot.y)<140) hitEnemy(50);
-                }
             }
-        }, 20);
-    }
-}
 
  
 
-function findSafeSpot(x, y) {
+            if (selectedClass === 'Piper') {
 
-    let dist = 10;
+                for(let i=0; i<4; i++) staticZones.push({x: sX + rnd(-40,40), y: sY + rnd(-40,40), r: 60, clr: 'rgba(255,0,0,0.5)', life: 30, dmg: 40, isExplosion: true});
 
-    while(dist < 200) {
+            }
 
-        for(let a=0; a<Math.PI*2; a+=Math.PI/4) {
+            let jInt = setInterval(() => {
 
-            let tx = x + Math.cos(a)*dist, ty = y + Math.sin(a)*dist;
+                player.jumpProg += 0.04;
 
-            if(!checkWall(tx, ty, 26)) return {x: tx, y: ty};
+                player.x = sX + (tX - sX) * player.jumpProg; player.y = sY + (tY - sY) * player.jumpProg;
+
+                if (player.jumpProg >= 1) {
+
+                    clearInterval(jInt); player.isJumping = false; screenShake = 20;
+
+                    if (selectedClass === 'Crow') for(let i=0; i<Math.PI*2; i+=0.4) spawnBullet(player.x, player.y, i, 14, '#2ecc71', 4, 25, 8, {isPoison: true});
+
+                    if (selectedClass === 'Primo' && Math.hypot(player.x-bot.x, player.y-bot.y) < 140) hitEnemy(50);
+
+                    if (selectedClass === 'Edgar') { player.spd *= 1.5; setTimeout(() => player.spd /= 1.5, 3000); }
+
+                }
+
+            }, 20);
 
         }
 
-        dist += 15;
-
     }
-
-    return {x: 150, y: 300}; // Emergency reset to start
 
 }
 
@@ -428,33 +633,25 @@ function findSafeSpot(x, y) {
 
 function spawnBullet(x, y, ang, spd, clr, dmg, life, size=8, extra={}) {
 
-    projectiles.push({ x, y, vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd, clr, dmg, life, size, startX: x, startY: y, ...extra });
-
-}
-
- 
-
-function gameLoop() {
-
-    if (gameState !== "PLAYING") return;
-
-    update(); draw();
-
-    animationId = requestAnimationFrame(gameLoop);
+    projectiles.push({ x, y, vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd, clr, dmg, life, size, ...extra });
 
 }
 
  
 
 function update() {
-roundTimer += 1/60;
-if (roundTimer > 4) gasSize += 0.15;
-if (bot.poisonTime > 0) {
-    bot.hp -= bot.poisonDps;
-    bot.poisonTime--;
-}
 
-    if (selectedClass === 'Edgar') player.super = Math.min(100, player.super + 0.08);
+    if (selectedClass === 'Edgar') player.super = Math.min(100, player.super + 0.1);
+
+   
+
+    // Poison
+
+    if (bot.poison > 0 && Math.floor(Date.now()/500) % 2 === 0) { hitEnemy(2, true); bot.poison--; }
+
+ 
+
+    // BOT AI + COLLISIONS
 
     const angToP = Math.atan2(player.y - bot.y, player.x - bot.x);
 
@@ -468,34 +665,45 @@ if (bot.poisonTime > 0) {
 
     }
 
-    let bvx = (bot.targetX - bot.x)*0.045 * botSlow;
-    let bvy = (bot.targetY - bot.y)*0.045 * botSlow;
+    let bNextX = bot.x + (bot.targetX - bot.x) * 0.04;
 
-    if (!checkWall(bot.x + bvx, bot.y, bot.r)) bot.x += bvx;
+    let bNextY = bot.y + (bot.targetY - bot.y) * 0.04;
 
-    if (!checkWall(bot.x, bot.y + bvy, bot.r)) bot.y += bvy;
+    if (!checkWall(bNextX, bot.y, bot.r) && bNextX > 30 && bNextX < 920) bot.x = bNextX;
+
+    if (!checkWall(bot.x, bNextY, bot.r) && bNextY > 30 && bNextY < 570) bot.y = bNextY;
+
+   
+
+    if (++bot.shootTimer > 85) {
+
+        enemyProjectiles.push({ x: bot.x, y: bot.y, vx: Math.cos(angToP)*9, vy: Math.sin(angToP)*9, clr: '#f44', dmg: 18, life: 60, size: 10 });
+
+        bot.shootTimer = 0;
+
+    }
 
    
 
-    if (++bot.shootTimer > 95) { enemyProjectiles.push({ x: bot.x, y: bot.y, vx: Math.cos(angToP)*8, vy: Math.sin(angToP)*8, clr: '#f44', dmg: 8, life: 60, size: 10 }); bot.shootTimer = 0; }
-
-   
+    // PLAYER + COLLISIONS
 
     if (!player.isJumping) {
 
         let nx = player.x, ny = player.y;
 
-        if (keys['w'] || keys['arrowup']) ny -= player.spd;
+        if (keys['w']) ny -= player.spd; if (keys['s']) ny += player.spd;
 
-        if (keys['s'] || keys['arrowdown']) ny += player.spd;
-
-        if (keys['a'] || keys['arrowleft']) nx -= player.spd;
-
-        if (keys['d'] || keys['arrowright']) nx += player.spd;
+        if (keys['a']) nx -= player.spd; if (keys['d']) nx += player.spd;
 
         if (!checkWall(nx, player.y, player.r) && nx > 30 && nx < 920) player.x = nx;
 
         if (!checkWall(player.x, ny, player.r) && ny > 30 && ny < 570) player.y = ny;
+
+       
+
+        // AMAAN Passive Aura
+
+        if (selectedClass === 'AMAAN' && Math.hypot(player.x - bot.x, player.y - bot.y) < 100) { bot.hp -= 0.5; }
 
     }
 
@@ -503,41 +711,39 @@ if (bot.poisonTime > 0) {
 
     if (player.ammo < 3 && --player.reload <= 0) { player.ammo++; player.reload = player.rel; }
 
-   
+ 
 
-    let botSlow = 1;
+    staticZones.forEach(z => {
 
-staticZones.forEach(z => {
-    if (z.followPlayer) { z.x = player.x; z.y = player.y; }
+        if(z.follow) { z.x = player.x; z.y = player.y; }
 
-    const inside = Math.hypot(bot.x - z.x, bot.y - z.y) < z.r;
+        if(Math.hypot(bot.x-z.x, bot.y-z.y) < z.r) {
 
-    // Spike super: constant damage + slow
-    if (z.isSpikeSuper && inside) {
-        bot.hp -= z.dmg;
-        botSlow = Math.min(botSlow, 0.6);
-    }
+            if (z.isExplosion && z.life === 29) hitEnemy(z.dmg);
 
-    // existing bomb + periodic zone logic
-    if (inside) {
-        if (z.isBomb && z.life === 1) hitEnemy(z.dmg);
-        else if (!z.isBomb && !z.isSpikeSuper && z.life % 15 === 0) hitEnemy(z.dmg);
-    }
+            else if (!z.isExplosion) { bot.hp -= z.dmg; }
 
-    z.life--;
-});
+            if (z.isPulling) { bot.x += (z.x - bot.x) * 0.05; bot.y += (z.y - bot.y) * 0.05; }
 
-staticZones = staticZones.filter(z => z.life > 0);
+        }
+
+        z.life--;
+
+    });
 
     staticZones = staticZones.filter(z => z.life > 0);
+
+   
 
     handleProjectiles(projectiles, bot, true);
 
     handleProjectiles(enemyProjectiles, player, false);
 
+   
+
     if (bot.hp <= 0) { winStreak++; resetRound(); screenShake = 20; }
 
-    if (player.hp <= 0) { backToMenu(); }
+    if (player.hp <= 0) backToMenu();
 
 }
 
@@ -553,31 +759,17 @@ function handleProjectiles(list, target, isP) {
 
         if (Math.hypot(b.x - target.x, b.y - target.y) < target.r + b.size && !player.isJumping) {
 
-            if (b.isHeal) { player.hp = Math.min(player.maxHp, player.hp + 8); }
+            if (b.isBat && isP) player.hp = Math.min(player.maxHp, player.hp + 15);
 
-            else if (b.isMortisSuper) {
+            if (b.isPoison && isP) bot.poison = 10;
 
-                hitEnemy(b.dmg);
+            if (isP) hitEnemy(b.dmg); else { target.hp -= b.dmg; target.hitFlash = 6; }
 
-                player.hp = Math.min(player.maxHp, player.hp + b.dmg);
-
-            }
-
-            else {
-
-                if (isP) hitEnemy(b.dmg);
-
-                else { target.hp -= b.dmg; target.hitFlash = 6; screenShake = 4; }
-
-                createFloatingText(target.x, target.y - 40, b.dmg.toFixed(1), isP ? "#ff0" : "#f44");
-
-            }
-
-            if (!b.isMortisSuper) list.splice(i, 1);
+            list.splice(i, 1);
 
         } else if (b.life <= 0) {
 
-            if (b.isSpike) { for(let j=0; j<Math.PI*2; j+=Math.PI/3) spawnBullet(b.x, b.y, j, 11, '#27ae60', b.dmg*0.6, 25, 10); }
+            if (b.isSpike) for(let j=0; j<Math.PI*2; j+=Math.PI/3) spawnBullet(b.x, b.y, j, 11, '#27ae60', b.dmg*0.6, 25, 10);
 
             list.splice(i, 1);
 
@@ -589,53 +781,135 @@ function handleProjectiles(list, target, isP) {
 
  
 
-function checkWall(x, y, r) { return walls.some(w => x + r > w.x && x - r < w.x + w.w && y + r > w.y && y - r < w.y + w.h); }
+function drawEnt(x, y, clr, hp, max, ico, sc, ammo, spr) {
+
+    ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc);
+
+    if (spr >= 100) { ctx.shadowBlur = 15; ctx.shadowColor = "#ffcc00"; ctx.strokeStyle = "#ffcc00"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI*2); ctx.stroke(); }
+
+    ctx.fillStyle = clr; ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI*2); ctx.fill();
+
+    ctx.shadowBlur = 0; ctx.fillStyle = "white"; ctx.font = "24px Arial"; ctx.fillText(ico, -14, 10); ctx.restore();
+
+    const barW = 70;
+
+    ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(x-35, y-55, barW, 6);
+
+    ctx.fillStyle = hp/max > 0.3 ? "#2ecc71" : "#e74c3c"; ctx.fillRect(x-35, y-55, Math.max(0, (hp/max)*barW), 6);
+
+    if (sc < 2) {
+
+        for(let i=0; i<3; i++) { ctx.fillStyle = i < ammo ? "#ff9f43" : "#333"; ctx.fillRect(x-35 + (i*24), y-46, 22, 4); }
+
+        ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(x-35, y-40, barW, 4);
+
+        ctx.fillStyle = spr >= 100 ? "#ffcc00" : "#f1c40f"; ctx.fillRect(x-35, y-40, (spr/100)*barW, 4);
+
+    }
+
+}
 
  
 
 function draw() {
 
-    ctx.save(); if (screenShake > 0) { ctx.translate(rnd(-screenShake, screenShake), rnd(-screenShake, screenShake)); screenShake *= 0.88; }
+    ctx.save();
 
-    ctx.clearRect(-100, -100, canvas.width+200, canvas.height+200);
+    if (screenShake > 0) { ctx.translate(rnd(-screenShake, screenShake), rnd(-screenShake, screenShake)); screenShake *= 0.88; }
 
-    staticZones.forEach(z => {
+   
 
-        ctx.fillStyle = z.isBomb ? (z.life < 10 ? "white" : "red") : z.clr;
+    // Draw Base Background
 
-        ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = mapData[selectedMapId].bg;
+
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+ 
+
+    // Draw Map Textures
+
+    if (selectedMapId === 'Arena') {
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'; ctx.lineWidth = 2;
+
+        for(let i=0; i<canvas.width; i+=50) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke(); }
+
+        for(let i=0; i<canvas.height; i+=50) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke(); }
+
+        ctx.strokeStyle = 'rgba(241, 196, 15, 0.2)'; ctx.lineWidth = 15;
+
+        ctx.beginPath(); ctx.arc(canvas.width/2, canvas.height/2, 120, 0, Math.PI*2); ctx.stroke();
+
+        ctx.beginPath(); ctx.arc(canvas.width/2, canvas.height/2, 40, 0, Math.PI*2); ctx.stroke();
+
+    } else if (selectedMapId === 'Crossroads') {
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+
+        for(let i=0; i<canvas.width; i+=60) {
+
+            for(let j=0; j<canvas.height; j+=60) {
+
+                if ((i/60 + j/60) % 2 === 0) ctx.fillRect(i, j, 60, 60);
+
+            }
+
+        }
+
+    }
+
+ 
+
+    // Static Zones
+
+    staticZones.forEach(z => { ctx.fillStyle = z.clr; ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI*2); ctx.fill(); });
+
+   
+
+    // Draw 3D Walls
+
+    walls.forEach(w => {
+
+        ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(w.x + 5, w.y + 10, w.w, w.h);
+
+        ctx.fillStyle = mapData[selectedMapId].wallColor; ctx.fillRect(w.x, w.y, w.w, w.h);
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 4; ctx.strokeRect(w.x + 2, w.y + 2, w.w - 4, w.h - 4);
 
     });
 
-    walls.forEach(w => { ctx.fillStyle = '#636e72'; ctx.fillRect(w.x, w.y, w.w, w.h); });
+ 
+
+    // Attacks & Entities
 
     slashes.forEach((s, i) => { ctx.strokeStyle = s.clr; ctx.lineWidth = 15; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, s.ang - 0.8, s.ang + 0.8); ctx.stroke(); s.life--; if (s.life <= 0) slashes.splice(i, 1); });
 
-    projectiles.concat(enemyProjectiles).forEach(b => {
+   
 
-        ctx.fillStyle = b.clr;
+    [...projectiles, ...enemyProjectiles].forEach(b => {
 
-        ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = b.clr; ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, Math.PI*2); ctx.fill();
 
     });
 
-    const icons = {Shelly:'🤠',Primo:'🥊',Colt:'🔫',Poco:'🎸',Edgar:'🧣',Crow:'🐦',Mortis:'🦇',Piper:'☂️',Spike:'🌵',Emz:'🤳'};
+ 
 
-    drawEnt(bot.x, bot.y, bot.hitFlash > 0 ? "white" : "#555", bot.hp, bot.maxHp, "🤖", 1);
+    const icons = {Shelly:'🤠',Primo:'🥊',Colt:'🔫',Poco:'🎸',Edgar:'🧣',Crow:'🐦',Mortis:'🦇',Piper:'☂️',Spike:'🌵',Emz:'🤳',AMAAN:'👑',Duck:'🦆'};
 
-    drawEnt(player.x, player.y, player.hitFlash > 0 ? "white" : player.clr, player.hp, player.maxHp, icons[selectedClass], player.isJumping ? 2.2 : 1);
+    drawEnt(bot.x, bot.y, bot.hitFlash > 0 ? "white" : (bot.poison > 0 ? "#2ecc71" : "#555"), bot.hp, bot.maxHp, "🤖", 1, 0, 0);
+
+    drawEnt(player.x, player.y, player.hitFlash > 0 ? "white" : player.clr, player.hp, player.maxHp, icons[selectedClass], player.isJumping ? 2.2 : 1, player.ammo, player.super);
+
+   
 
     floatingTexts.forEach((t, i) => { t.y += t.vy; t.life--; ctx.fillStyle = t.clr; ctx.font="bold 24px Arial"; ctx.fillText(t.text, t.x, t.y); if (t.life <= 0) floatingTexts.splice(i, 1); });
 
+   
+
     ctx.restore();
 
-    if (bot.hitFlash > 0) bot.hitFlash--;
-
-    document.getElementById('p-hp').innerText = `HP: ${Math.round(player.hp)}`;
-
     document.getElementById('streak-ui').innerText = `WINS: ${winStreak}`;
-
-    document.getElementById('super-ui').innerText = `SUPER: ${Math.floor(player.super)}%`;
 
 }
 
@@ -645,29 +919,21 @@ function createFloatingText(x, y, text, clr) { floatingTexts.push({ x, y, text, 
 
  
 
-function drawEnt(x, y, clr, hp, max, ico, sc) {
+function gameLoop() {
 
-    ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc);
+    if (gameState === "PLAYING") {
 
-    ctx.fillStyle = clr; ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI*2); ctx.fill();
+        update();
 
-    ctx.fillStyle = "white"; ctx.font = "24px Arial"; ctx.fillText(ico, -14, 10); ctx.restore();
+        draw();
 
-    ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(x-35, y-55, 70, 10);
+        animationId = requestAnimationFrame(gameLoop);
 
-    ctx.fillStyle = hp/max > 0.3 ? "#2ecc71" : "#e74c3c"; ctx.fillRect(x-35, y-55, Math.max(0, (hp/max)*70), 10);
+    }
 
 }
 
- 
-
-window.onkeydown = (e) => {
-
-    keys[e.key.toLowerCase()] = true;
-
-    if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); triggerSuper(); }
-
-};
+window.onkeydown = (e) => { keys[e.key.toLowerCase()] = true; if (e.code === 'Space') { e.preventDefault(); triggerSuper(); } };
 
 window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
     </script>
