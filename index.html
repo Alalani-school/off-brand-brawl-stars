@@ -5,839 +5,1670 @@
   </head>
   <body>
     <script>
-     
-// 1. UI SETUP
+      // 1. UI SETUP
+
 document.body.innerHTML = `
-    <style>
-        @keyframes gradientBG { 0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;} }
-        body {
-            margin: 0;
-            background: linear-gradient(-45deg, #0b0e11, #1a1c20, #0b0e11, #2c3e50);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            color: white;
-            font-family: 'Arial Black', sans-serif;
-            overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh;
-        }
-        #menu {
-            text-align: center;
-            background: rgba(15, 15, 15, 0.95);
-            backdrop-filter: blur(15px);
-            padding: 30px;
-            border-radius: 40px;
-            border: 4px solid rgba(255, 204, 0, 0.3);
-            z-index: 10;
-            width: 950px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-        }
-        .brawler-grid { display: flex; gap: 15px; justify-content: center; margin: 20px 0 30px 0; flex-wrap: wrap; }
-       
-        .card {
-            background: rgba(44, 62, 80, 0.6); padding: 15px; border-radius: 15px;
-            cursor: pointer; border: 3px solid rgba(255,255,255,0.1); width: 130px;
-            transition: all 0.2s; font-size: 16px;
-        }
-        .card:hover { transform: translateY(-8px); background: #34495e; border-color: #ffcc00; }
-        .card.selected { border-color: #00ff00; background: #1b4d3e; transform: scale(1.1); box-shadow: 0 0 20px #00ff00; }
-        .card h3 { margin: 0; font-size: 20px; }
-       
-        /* MODE SELECTION */
-        .mode-container { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; }
-        .mode-btn {
-            background: #2c3e50; color: white; border: 3px solid #555; padding: 20px 40px; border-radius: 15px;
-            font-size: 24px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 250px;
-        }
-        .mode-btn:hover { background: #34495e; transform: scale(1.05); }
-        .mode-btn.selected { border-color: #9b59b6; background: #8e44ad; box-shadow: 0 0 25px rgba(155, 89, 182, 0.6); }
-       
-        /* MAP SELECTION */
-        #map-section { display: none; opacity: 0; transition: opacity 0.5s; }
-        .map-btn {
-            background: #2c3e50; color: white; border: 3px solid #555; padding: 15px 30px; border-radius: 10px;
-            font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; margin: 0 10px;
-        }
-        .map-btn.selected { border-color: #3498db; background: #2980b9; box-shadow: 0 0 20px rgba(52, 152, 219, 0.5); }
- 
-        .btn {
-            background: linear-gradient(180deg, #ffe066 0%, #ffcc00 100%); color: #2c3e50;
-            padding: 15px 80px; border: none; font-size: 32px; cursor: pointer; border-radius: 15px;
-            font-weight: 900; margin-top: 25px; text-transform: uppercase;
-            box-shadow: 0 5px 0 #b38f00; transition: all 0.1s;
-        }
-        .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #b38f00; }
-       
-        #hud { position: absolute; top: 25px; display: none; width: 900px; justify-content: space-between; z-index: 5; pointer-events: none;}
-        .hud-box { background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 15px; border: 2px solid #555; font-size: 24px; color: white; font-weight: bold; }
-       
-        #ws-hud {
-            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-            background: rgba(255, 215, 0, 0.2); border: 2px solid #f1c40f; color: #f1c40f;
-            padding: 10px 30px; border-radius: 20px; font-size: 28px; font-weight: 900;
-            text-shadow: 0 2px 0 #000; display: none; z-index: 6;
-        }
- 
-        #countdown-display {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 150px; color: white; text-shadow: 0 0 30px #000;
-            font-weight: 900; z-index: 100; display: none; pointer-events: none;
-        }
-       
-        /* KILL FEED */
-        #kill-feed {
-            position: absolute; top: 20px; right: 20px; width: 300px;
-            display: flex; flex-direction: column; align-items: flex-end; z-index: 20; pointer-events: none;
-        }
-        .kill-msg {
-            background: rgba(0,0,0,0.8); padding: 8px 15px; margin-bottom: 5px;
-            border-radius: 5px; border-left: 4px solid #fff; font-size: 18px;
-            animation: fadeIn 0.3s ease-out;
-        }
-        @keyframes fadeIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
- 
-        #exit-btn { position: absolute; top: 25px; right: 25px; display: none; background: #e74c3c; color: white; border: none; padding: 12px 25px; font-size: 18px; border-radius: 10px; cursor: pointer; font-weight: bold; z-index: 100; }
-        canvas { border: 12px solid #1a1a1a; display: none; border-radius: 25px; box-shadow: 0 0 80px #000; cursor: crosshair; }
- 
-        #custom-maker {
-            display: none; position: absolute; z-index: 50; background: rgba(20, 20, 20, 0.98);
-            padding: 20px 40px; border-radius: 20px; border: 4px solid #00ff00; color: white;
-            box-shadow: 0 0 80px rgba(0, 255, 0, 0.2); text-align: left; font-family: 'Arial Black'; width: 600px;
-            max-height: 90vh; overflow-y: auto;
-        }
-        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;}
-        #custom-maker input { background: #333; color: #fff; border: 2px solid #555; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 16px; font-weight:bold;}
-        label { font-size: 14px; color: #aaa; margin-bottom: 5px; display:block;}
-    </style>
-   
-    <div id="kill-feed"></div>
- 
-    <div id="menu">
-        <h1 style="color:#ffcc00; font-size: 50px; margin: 0; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">BRAWL ENGINE</h1>
-       
-        <div class="brawler-grid" id="grid"></div>
-       
-        <div id="mode-section" style="display:none;">
-            <p style="color:#bdc3c7; font-size: 20px;">SELECT GAME MODE</p>
-            <div class="mode-container">
-                <button class="mode-btn" onclick="selectMode('GemGrab', this)">💎 GEM GRAB</button>
-                <button class="mode-btn" onclick="selectMode('Showdown', this)">☠️ SHOWDOWN</button>
-            </div>
-        </div>
- 
-        <div id="map-section">
-            <p style="color:#bdc3c7; font-size: 20px;">SELECT MAP</p>
-            <div style="display: flex; gap: 15px; justify-content: center;">
-                <button class="map-btn selected" id="map-arena" onclick="selectMap('Arena', this)">🏟️ THE ARENA</button>
-                <button class="map-btn" id="map-shadow" onclick="selectMap('ShadowCreek', this)">🌑 SHADOW CREEK</button>
-            </div>
-            <button class="btn" id="startBtn" onclick="startGame()">PLAY</button>
-        </div>
-    </div>
-   
-    <div id="custom-maker">
-        <h2 style="margin-top:0; color:#00ff00; text-align:center; font-size:30px;">🛠️ CREATE BRAWLER</h2>
-        <div class="input-grid">
-            <div><label>NAME:</label><input type="text" id="cb-name" value="MY HERO"></div>
-            <div><label>ICON (Emoji):</label><input type="text" id="cb-emoji" value="🔥"></div>
-            <div><label>HP:</label><input type="number" id="cb-hp" value="150"></div>
-            <div><label>SPEED:</label><input type="number" id="cb-spd" value="5"></div>
-            <div><label>COLOR:</label><input type="color" id="cb-color" value="#00ff00" style="height:45px"></div>
-        </div>
-        <h3 style="margin:10px 0; color:#ffcc00">ATTACK</h3>
-        <div class="input-grid">
-            <div><label>DAMAGE:</label><input type="number" id="cb-a-dmg" value="15"></div>
-            <div><label>PROJECTILES:</label><input type="number" id="cb-a-count" value="1"></div>
-            <div><label>SPREAD (0-360):</label><input type="number" id="cb-a-spread" value="0"></div>
-            <div><label>SPEED:</label><input type="number" id="cb-a-spd" value="15"></div>
-        </div>
-        <h3 style="margin:10px 0; color:#ffcc00">SUPER</h3>
-        <div class="input-grid">
-            <div><label>DAMAGE:</label><input type="number" id="cb-s-dmg" value="25"></div>
-            <div><label>PROJECTILES:</label><input type="number" id="cb-s-count" value="10"></div>
-            <div><label>SPREAD (0-360):</label><input type="number" id="cb-s-spread" value="360"></div>
-            <div><label>SPEED:</label><input type="number" id="cb-s-spd" value="20"></div>
-        </div>
-        <button class="btn" onclick="saveCustom()" style="margin-top:15px; padding:15px; width:100%; font-size:24px;">SAVE & SELECT</button>
-    </div>
- 
-    <button id="exit-btn" onclick="backToMenu()">MENU ☰</button>
-    <div id="ws-hud">WIN STREAK: 0</div>
-    <div id="countdown-display">15</div>
-    <div id="hud">
-        <div class="hud-box" id="p-score" style="color:#3498db">YOU: 0</div>
-        <div class="hud-box" id="e-score" style="color:#e74c3c">BOT: 0</div>
-    </div>
-    <canvas id="gameCanvas" width="950" height="600"></canvas>
+
+    <style>
+
+        @keyframes gradientBG { 0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;} }
+
+        body {
+
+            margin: 0;
+
+            background: linear-gradient(-45deg, #0b0e11, #1a1c20, #0b0e11, #2c3e50);
+
+            background-size: 400% 400%;
+
+            animation: gradientBG 15s ease infinite;
+
+            color: white;
+
+            font-family: 'Arial Black', sans-serif;
+
+            overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh;
+
+        }
+
+        #menu {
+
+            text-align: center;
+
+            background: rgba(15, 15, 15, 0.95);
+
+            backdrop-filter: blur(15px);
+
+            padding: 30px;
+
+            border-radius: 40px;
+
+            border: 4px solid rgba(255, 204, 0, 0.3);
+
+            z-index: 10;
+
+            width: 950px;
+
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+
+        }
+
+        .brawler-grid { display: flex; gap: 15px; justify-content: center; margin: 20px 0 30px 0; flex-wrap: wrap; }
+
+       
+
+        .card {
+
+            background: rgba(44, 62, 80, 0.6); padding: 15px; border-radius: 15px;
+
+            cursor: pointer; border: 3px solid rgba(255,255,255,0.1); width: 130px;
+
+            transition: all 0.2s; font-size: 16px;
+
+        }
+
+        .card:hover { transform: translateY(-8px); background: #34495e; border-color: #ffcc00; }
+
+        .card.selected { border-color: #00ff00; background: #1b4d3e; transform: scale(1.1); box-shadow: 0 0 20px #00ff00; }
+
+        .card h3 { margin: 0; font-size: 20px; }
+
+       
+
+        /* MODE SELECTION */
+
+        .mode-container { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; }
+
+        .mode-btn {
+
+            background: #2c3e50; color: white; border: 3px solid #555; padding: 20px 40px; border-radius: 15px;
+
+            font-size: 24px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 250px;
+
+        }
+
+        .mode-btn:hover { background: #34495e; transform: scale(1.05); }
+
+        .mode-btn.selected { border-color: #9b59b6; background: #8e44ad; box-shadow: 0 0 25px rgba(155, 89, 182, 0.6); }
+
+       
+
+        /* MAP SELECTION */
+
+        #map-section { display: none; opacity: 0; transition: opacity 0.5s; }
+
+        .map-btn {
+
+            background: #2c3e50; color: white; border: 3px solid #555; padding: 15px 30px; border-radius: 10px;
+
+            font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; margin: 0 10px;
+
+        }
+
+        .map-btn.selected { border-color: #3498db; background: #2980b9; box-shadow: 0 0 20px rgba(52, 152, 219, 0.5); }
+
+ 
+
+        .btn {
+
+            background: linear-gradient(180deg, #ffe066 0%, #ffcc00 100%); color: #2c3e50;
+
+            padding: 15px 80px; border: none; font-size: 32px; cursor: pointer; border-radius: 15px;
+
+            font-weight: 900; margin-top: 25px; text-transform: uppercase;
+
+            box-shadow: 0 5px 0 #b38f00; transition: all 0.1s;
+
+        }
+
+        .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #b38f00; }
+
+       
+
+        #hud { position: absolute; top: 25px; display: none; width: 900px; justify-content: space-between; z-index: 5; pointer-events: none;}
+
+        .hud-box { background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 15px; border: 2px solid #555; font-size: 24px; color: white; font-weight: bold; }
+
+       
+
+        #ws-hud {
+
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+
+            background: rgba(255, 215, 0, 0.2); border: 2px solid #f1c40f; color: #f1c40f;
+
+            padding: 10px 30px; border-radius: 20px; font-size: 28px; font-weight: 900;
+
+            text-shadow: 0 2px 0 #000; display: none; z-index: 6;
+
+        }
+
+ 
+
+        #countdown-display {
+
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+
+            font-size: 150px; color: white; text-shadow: 0 0 30px #000;
+
+            font-weight: 900; z-index: 100; display: none; pointer-events: none;
+
+        }
+
+       
+
+        /* KILL FEED */
+
+        #kill-feed {
+
+            position: absolute; top: 20px; right: 20px; width: 300px;
+
+            display: flex; flex-direction: column; align-items: flex-end; z-index: 20; pointer-events: none;
+
+        }
+
+        .kill-msg {
+
+            background: rgba(0,0,0,0.8); padding: 8px 15px; margin-bottom: 5px;
+
+            border-radius: 5px; border-left: 4px solid #fff; font-size: 18px;
+
+            animation: fadeIn 0.3s ease-out;
+
+        }
+
+        @keyframes fadeIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+
+ 
+
+        #exit-btn { position: absolute; top: 25px; right: 25px; display: none; background: #e74c3c; color: white; border: none; padding: 12px 25px; font-size: 18px; border-radius: 10px; cursor: pointer; font-weight: bold; z-index: 100; }
+
+        canvas { border: 12px solid #1a1a1a; display: none; border-radius: 25px; box-shadow: 0 0 80px #000; cursor: crosshair; }
+
+ 
+
+        #custom-maker {
+
+            display: none; position: absolute; z-index: 50; background: rgba(20, 20, 20, 0.98);
+
+            padding: 20px 40px; border-radius: 20px; border: 4px solid #00ff00; color: white;
+
+            box-shadow: 0 0 80px rgba(0, 255, 0, 0.2); text-align: left; font-family: 'Arial Black'; width: 600px;
+
+            max-height: 90vh; overflow-y: auto;
+
+        }
+
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;}
+
+        #custom-maker input { background: #333; color: #fff; border: 2px solid #555; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 16px; font-weight:bold;}
+
+        label { font-size: 14px; color: #aaa; margin-bottom: 5px; display:block;}
+
+    </style>
+
+   
+
+    <div id="kill-feed"></div>
+
+ 
+
+    <div id="menu">
+
+        <h1 style="color:#ffcc00; font-size: 50px; margin: 0; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">BRAWL ENGINE</h1>
+
+       
+
+        <div class="brawler-grid" id="grid"></div>
+
+       
+
+        <div id="mode-section" style="display:none;">
+
+            <p style="color:#bdc3c7; font-size: 20px;">SELECT GAME MODE</p>
+
+            <div class="mode-container">
+
+                <button class="mode-btn" onclick="selectMode('GemGrab', this)">💎 GEM GRAB</button>
+
+                <button class="mode-btn" onclick="selectMode('Showdown', this)">☠️ SHOWDOWN</button>
+
+            </div>
+
+        </div>
+
+ 
+
+        <div id="map-section">
+
+            <p style="color:#bdc3c7; font-size: 20px;">SELECT MAP</p>
+
+            <div style="display: flex; gap: 15px; justify-content: center;">
+
+                <button class="map-btn selected" id="map-arena" onclick="selectMap('Arena', this)">🏟️ THE ARENA</button>
+
+                <button class="map-btn" id="map-shadow" onclick="selectMap('ShadowCreek', this)">🌑 SHADOW CREEK</button>
+
+            </div>
+
+            <button class="btn" id="startBtn" onclick="startGame()">PLAY</button>
+
+        </div>
+
+    </div>
+
+   
+
+    <div id="custom-maker">
+
+        <h2 style="margin-top:0; color:#00ff00; text-align:center; font-size:30px;">🛠️ CREATE BRAWLER</h2>
+
+        <div class="input-grid">
+
+            <div><label>NAME:</label><input type="text" id="cb-name" value="MY HERO"></div>
+
+            <div><label>ICON (Emoji):</label><input type="text" id="cb-emoji" value="🔥"></div>
+
+            <div><label>HP:</label><input type="number" id="cb-hp" value="150"></div>
+
+            <div><label>SPEED:</label><input type="number" id="cb-spd" value="5"></div>
+
+            <div><label>COLOR:</label><input type="color" id="cb-color" value="#00ff00" style="height:45px"></div>
+
+        </div>
+
+        <h3 style="margin:10px 0; color:#ffcc00">ATTACK</h3>
+
+        <div class="input-grid">
+
+            <div><label>DAMAGE:</label><input type="number" id="cb-a-dmg" value="15"></div>
+
+            <div><label>PROJECTILES:</label><input type="number" id="cb-a-count" value="1"></div>
+
+            <div><label>SPREAD (0-360):</label><input type="number" id="cb-a-spread" value="0"></div>
+
+            <div><label>SPEED:</label><input type="number" id="cb-a-spd" value="15"></div>
+
+        </div>
+
+        <h3 style="margin:10px 0; color:#ffcc00">SUPER</h3>
+
+        <div class="input-grid">
+
+            <div><label>DAMAGE:</label><input type="number" id="cb-s-dmg" value="25"></div>
+
+            <div><label>PROJECTILES:</label><input type="number" id="cb-s-count" value="10"></div>
+
+            <div><label>SPREAD (0-360):</label><input type="number" id="cb-s-spread" value="360"></div>
+
+            <div><label>SPEED:</label><input type="number" id="cb-s-spd" value="20"></div>
+
+        </div>
+
+        <button class="btn" onclick="saveCustom()" style="margin-top:15px; padding:15px; width:100%; font-size:24px;">SAVE & SELECT</button>
+
+    </div>
+
+ 
+
+    <button id="exit-btn" onclick="backToMenu()">MENU ☰</button>
+
+    <div id="ws-hud">WIN STREAK: 0</div>
+
+    <div id="countdown-display">15</div>
+
+    <div id="hud">
+
+        <div class="hud-box" id="p-score" style="color:#3498db">YOU: 0</div>
+
+        <div class="hud-box" id="e-score" style="color:#e74c3c">BOT: 0</div>
+
+    </div>
+
+    <canvas id="gameCanvas" width="950" height="600"></canvas>
+
 `;
- 
+
+ 
+
 const brawlers = [
-    {n:'Square&Circle', i:'🟦'}, {n:'Case-Oh', i:'🍔'}, {n:'Shelly', i:'🤠'}, {n:'Primo', i:'🥊'},
-    {n:'Colt', i:'🔫'}, {n:'Poco', i:'🎸'}, {n:'Edgar', i:'🧣'},
-    {n:'Crow', i:'🐦'}, {n:'Mortis', i:'🦇'}, {n:'Piper', i:'☂️'},
-    {n:'Spike', i:'🌵'}, {n:'Emz', i:'🤳'}, {n:'AMAAN', i:'👑'},
-    {n:'Duck', i:'🦆'}, {n:'CUSTOM', i:'🛠️'}
+
+    {n:'Square&Circle', i:'🟦'}, {n:'Case-Oh', i:'🍔'}, {n:'Shelly', i:'🤠'}, {n:'Primo', i:'🥊'},
+
+    {n:'Colt', i:'🔫'}, {n:'Poco', i:'🎸'}, {n:'Edgar', i:'🧣'},
+
+    {n:'Crow', i:'🐦'}, {n:'Mortis', i:'🦇'}, {n:'Piper', i:'☂️'},
+
+    {n:'Spike', i:'🌵'}, {n:'Emz', i:'🤳'}, {n:'AMAAN', i:'👑'},
+
+    {n:'Duck', i:'🦆'}, {n:'CUSTOM', i:'🛠️'}
+
 ];
- 
+
+ 
+
 // Default Custom Stats
+
 let customStats = {
-    name: 'CUSTOM', icon: '🛠️', clr: '#00ff00', hp: 120, spd: 5.0,
-    rel: 40, chrg: 20,
-    aDmg: 15, aCount: 1, aSpread: 0, aSpd: 15, aLife: 40, aSize: 10,
-    sDmg: 25, sCount: 12, sSpread: Math.PI * 2, sSpd: 20, sLife: 50, sSize: 15
+
+    name: 'CUSTOM', icon: '🛠️', clr: '#00ff00', hp: 120, spd: 5.0,
+
+    rel: 40, chrg: 20,
+
+    aDmg: 15, aCount: 1, aSpread: 0, aSpd: 15, aLife: 40, aSize: 10,
+
+    sDmg: 25, sCount: 12, sSpread: Math.PI * 2, sSpd: 20, sLife: 50, sSize: 15
+
 };
- 
+
+ 
+
 const canvas = document.getElementById('gameCanvas');
+
 const ctx = canvas.getContext('2d');
+
 let gameState = "MENU", winStreak = 0, selectedClass = null, selectedMapId = 'Arena', selectedMode = null, animationId = null;
+
 let projectiles = [], enemyProjectiles = [], staticZones = [], walls = [], keys = {}, particles = [], gems = [], minions = [];
+
 let floatingTexts = [], slashes = [], screenShake = 0, mouseX = 0, mouseY = 0;
+
 let gemMineTimer = 0, countdownTimer = 900;
- 
+
+ 
+
 let player = { x: 150, y: 300, r: 24, ammo: 3, reload: 0, super: 0, isJumping: false, jumpProg: 0, hitFlash: 0, spd: 4.5, gemCount: 0, walkFrame: 0 };
+
 let bot = { x: 800, y: 300, r: 24, hp: 100, maxHp: 100, moveTimer: 0, shootTimer: 0, targetX: 800, targetY: 300, hitFlash: 0, poison: 0, gemCount: 0, walkFrame: 0 };
- 
+
+ 
+
 const rnd = (min, max) => Math.random() * (max - min) + min;
- 
+
+ 
+
 // UI Logic
+
 brawlers.forEach(b => {
-    const d = document.createElement('div');
-    d.className = 'card';
-    d.innerHTML = `<h3>${b.i}</h3><div style="margin-top:5px;">${b.n}</div>`;
-    if (b.n === 'CUSTOM') d.id = 'custom-card';
-    d.onclick = () => selectBrawler(b.n, d);
-    document.getElementById('grid').appendChild(d);
+
+    const d = document.createElement('div');
+
+    d.className = 'card';
+
+    d.innerHTML = `<h3>${b.i}</h3><div style="margin-top:5px;">${b.n}</div>`;
+
+    if (b.n === 'CUSTOM') d.id = 'custom-card';
+
+    d.onclick = () => selectBrawler(b.n, d);
+
+    document.getElementById('grid').appendChild(d);
+
 });
- 
+
+ 
+
 window.selectBrawler = (name, el) => {
-    if (name === 'CUSTOM' && el) { document.getElementById('custom-maker').style.display = 'block'; return; }
-   
-    selectedClass = name;
-    document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
-    if(el) el.classList.add('selected');
-    else document.getElementById('custom-card').classList.add('selected');
-    
-    document.getElementById('mode-section').style.display = "block";
+
+    if (name === 'CUSTOM' && el) { document.getElementById('custom-maker').style.display = 'block'; return; }
+
+   
+
+    selectedClass = name;
+
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+
+    if(el) el.classList.add('selected');
+
+    else document.getElementById('custom-card').classList.add('selected');
+
+    
+
+    document.getElementById('mode-section').style.display = "block";
+
 };
- 
+
+ 
+
 window.selectMode = (mode, el) => {
-    selectedMode = mode;
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
-    el.classList.add('selected');
-    document.getElementById('map-section').style.display = "block";
-    setTimeout(() => document.getElementById('map-section').style.opacity = "1", 50);
+
+    selectedMode = mode;
+
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
+
+    el.classList.add('selected');
+
+    document.getElementById('map-section').style.display = "block";
+
+    setTimeout(() => document.getElementById('map-section').style.opacity = "1", 50);
+
 };
- 
+
+ 
+
 window.selectMap = (mapName, el) => {
-    selectedMapId = mapName;
-    document.querySelectorAll('.map-btn').forEach(b => b.classList.remove('selected'));
-    el.classList.add('selected');
+
+    selectedMapId = mapName;
+
+    document.querySelectorAll('.map-btn').forEach(b => b.classList.remove('selected'));
+
+    el.classList.add('selected');
+
 };
- 
+
+ 
+
 window.saveCustom = () => {
-    customStats.name = document.getElementById('cb-name').value.toUpperCase();
-    customStats.icon = document.getElementById('cb-emoji').value;
-    customStats.hp = parseInt(document.getElementById('cb-hp').value) || 100;
-    customStats.spd = parseFloat(document.getElementById('cb-spd').value) || 5;
-    customStats.clr = document.getElementById('cb-color').value;
-   
-    customStats.aDmg = parseInt(document.getElementById('cb-a-dmg').value);
-    customStats.aCount = parseInt(document.getElementById('cb-a-count').value);
-    customStats.aSpread = parseInt(document.getElementById('cb-a-spread').value) * (Math.PI/180);
-    customStats.aSpd = parseInt(document.getElementById('cb-a-spd').value);
- 
-    customStats.sDmg = parseInt(document.getElementById('cb-s-dmg').value);
-    customStats.sCount = parseInt(document.getElementById('cb-s-count').value);
-    customStats.sSpread = parseInt(document.getElementById('cb-s-spread').value) * (Math.PI/180);
-    customStats.sSpd = parseInt(document.getElementById('cb-s-spd').value);
- 
-    document.getElementById('custom-maker').style.display = 'none';
-    const card = document.getElementById('custom-card');
-    card.innerHTML = `<h3>${customStats.icon}</h3><div style="margin-top:5px;">${customStats.name}</div>`;
-    selectBrawler('CUSTOM', null);
+
+    customStats.name = document.getElementById('cb-name').value.toUpperCase();
+
+    customStats.icon = document.getElementById('cb-emoji').value;
+
+    customStats.hp = parseInt(document.getElementById('cb-hp').value) || 100;
+
+    customStats.spd = parseFloat(document.getElementById('cb-spd').value) || 5;
+
+    customStats.clr = document.getElementById('cb-color').value;
+
+   
+
+    customStats.aDmg = parseInt(document.getElementById('cb-a-dmg').value);
+
+    customStats.aCount = parseInt(document.getElementById('cb-a-count').value);
+
+    customStats.aSpread = parseInt(document.getElementById('cb-a-spread').value) * (Math.PI/180);
+
+    customStats.aSpd = parseInt(document.getElementById('cb-a-spd').value);
+
+ 
+
+    customStats.sDmg = parseInt(document.getElementById('cb-s-dmg').value);
+
+    customStats.sCount = parseInt(document.getElementById('cb-s-count').value);
+
+    customStats.sSpread = parseInt(document.getElementById('cb-s-spread').value) * (Math.PI/180);
+
+    customStats.sSpd = parseInt(document.getElementById('cb-s-spd').value);
+
+ 
+
+    document.getElementById('custom-maker').style.display = 'none';
+
+    const card = document.getElementById('custom-card');
+
+    card.innerHTML = `<h3>${customStats.icon}</h3><div style="margin-top:5px;">${customStats.name}</div>`;
+
+    selectBrawler('CUSTOM', null);
+
 };
- 
+
+ 
+
 // MAP DATA
+
 const mapData = {
-    Arena: { bg: '#576574', wallColor: '#222f3e', walls: [{x: 200, y: 100, w: 80, h: 80}, {x: 200, y: 420, w: 80, h: 80}, {x: 670, y: 100, w: 80, h: 80}, {x: 670, y: 420, w: 80, h: 80}, {x: 400, y: 225, w: 150, h: 150}] },
-    ShadowCreek: { bg: '#2d3436', wallColor: '#636e72', walls: [{x: 445, y: 0, w: 60, h: 180}, {x: 445, y: 420, w: 60, h: 180}, {x: 250, y: 150, w: 450, h: 40}, {x: 250, y: 410, w: 450, h: 40}] }
+
+    Arena: { bg: '#576574', wallColor: '#222f3e', walls: [{x: 200, y: 100, w: 80, h: 80}, {x: 200, y: 420, w: 80, h: 80}, {x: 670, y: 100, w: 80, h: 80}, {x: 670, y: 420, w: 80, h: 80}, {x: 400, y: 225, w: 150, h: 150}] },
+
+    ShadowCreek: { bg: '#2d3436', wallColor: '#636e72', walls: [{x: 445, y: 0, w: 60, h: 180}, {x: 445, y: 420, w: 60, h: 180}, {x: 250, y: 150, w: 450, h: 40}, {x: 250, y: 410, w: 450, h: 40}] }
+
 };
- 
+
+ 
+
 window.startGame = () => {
-    gameState = "PLAYING";
-    document.getElementById('menu').style.display = "none";
-    canvas.style.display = "block";
-    document.getElementById('hud').style.display = "flex";
-    document.getElementById('ws-hud').style.display = "block";
-    document.getElementById('exit-btn').style.display = "block";
-    document.getElementById('kill-feed').innerHTML = ''; // Clear feed
-   
-    const stats = {
-        'Square&Circle': { hp: 130, spd: 4.8, clr: '#0097e6', dmg: 18, rel: 45, chrg: 25 },
-        'Case-Oh': { hp: 450, spd: 3.5, clr: '#e67e22', dmg: 20, rel: 40, chrg: 20, r: 55 },
-        Shelly: { hp: 100, spd: 4.6, clr: '#3498db', dmg: 7, rel: 45, chrg: 12 },
-        Primo:  { hp: 220, spd: 4.4, clr: '#f39c12', dmg: 16, rel: 35, chrg: 15 },
-        Colt:   { hp: 80,  spd: 5.6, clr: '#e74c3c', dmg: 5,  rel: 55, chrg: 6 },
-        Poco:   { hp: 120, spd: 4.8, clr: '#9b59b6', dmg: 8,  rel: 55, chrg: 14 },
-        Edgar:  { hp: 95,  spd: 5.8, clr: '#34495e', dmg: 13, rel: 22, chrg: 18 },
-        Crow:   { hp: 75,  spd: 5.8, clr: '#2c3e50', dmg: 3,  rel: 42, chrg: 10 },
-        Mortis: { hp: 170, spd: 5.5, clr: '#8e44ad', dmg: 26, rel: 60, chrg: 25 },
-        Piper:  { hp: 70,  spd: 4.6, clr: '#3498db', dmg: 16, rel: 70, chrg: 30 },
-        Spike:  { hp: 75,  spd: 4.6, clr: '#27ae60', dmg: 11, rel: 55, chrg: 20 },
-        Emz:    { hp: 110, spd: 4.5, clr: '#a29bfe', dmg: 6,  rel: 50, chrg: 15 },
-        AMAAN:  { hp: 999, spd: 7.5, clr: '#f1c40f', dmg: 45, rel: 10, chrg: 35 },
-        Duck:   { hp: 85,  spd: 5.2, clr: '#f1c40f', dmg: 6,  rel: 40, chrg: 12 },
-        CUSTOM: customStats
-    }[selectedClass];
-   
-    Object.assign(player, { r: 24, ...stats, maxHp: stats.hp, hp: stats.hp, super: 0, ammo: 3, gemCount: 0 });
-   
-    walls = [...mapData[selectedMapId].walls];
-    if (selectedMode === 'GemGrab' && selectedMapId === 'Arena') walls = walls.filter(w => w.w !== 150);
-    resetRound();
-    gameLoop();
+
+    gameState = "PLAYING";
+
+    document.getElementById('menu').style.display = "none";
+
+    canvas.style.display = "block";
+
+    document.getElementById('hud').style.display = "flex";
+
+    document.getElementById('ws-hud').style.display = "block";
+
+    document.getElementById('exit-btn').style.display = "block";
+
+    document.getElementById('kill-feed').innerHTML = ''; // Clear feed
+
+   
+
+    const stats = {
+
+        'Square&Circle': { hp: 130, spd: 4.8, clr: '#0097e6', dmg: 18, rel: 45, chrg: 25 },
+
+        'Case-Oh': { hp: 450, spd: 3.5, clr: '#e67e22', dmg: 20, rel: 40, chrg: 20, r: 55 },
+
+        Shelly: { hp: 100, spd: 4.6, clr: '#3498db', dmg: 7, rel: 45, chrg: 12 },
+
+        Primo:  { hp: 220, spd: 4.4, clr: '#f39c12', dmg: 16, rel: 35, chrg: 15 },
+
+        Colt:   { hp: 80,  spd: 5.6, clr: '#e74c3c', dmg: 5,  rel: 55, chrg: 6 },
+
+        Poco:   { hp: 120, spd: 4.8, clr: '#9b59b6', dmg: 8,  rel: 55, chrg: 14 },
+
+        Edgar:  { hp: 95,  spd: 5.8, clr: '#34495e', dmg: 13, rel: 22, chrg: 18 },
+
+        Crow:   { hp: 75,  spd: 5.8, clr: '#2c3e50', dmg: 3,  rel: 42, chrg: 10 },
+
+        Mortis: { hp: 170, spd: 5.5, clr: '#8e44ad', dmg: 26, rel: 60, chrg: 25 },
+
+        Piper:  { hp: 70,  spd: 4.6, clr: '#3498db', dmg: 16, rel: 70, chrg: 30 },
+
+        Spike:  { hp: 75,  spd: 4.6, clr: '#27ae60', dmg: 11, rel: 55, chrg: 20 },
+
+        Emz:    { hp: 110, spd: 4.5, clr: '#a29bfe', dmg: 6,  rel: 50, chrg: 15 },
+
+        AMAAN:  { hp: 999, spd: 7.5, clr: '#f1c40f', dmg: 45, rel: 10, chrg: 35 },
+
+        Duck:   { hp: 85,  spd: 5.2, clr: '#f1c40f', dmg: 6,  rel: 40, chrg: 12 },
+
+        CUSTOM: customStats
+
+    }[selectedClass];
+
+   
+
+    Object.assign(player, { r: 24, ...stats, maxHp: stats.hp, hp: stats.hp, super: 0, ammo: 3, gemCount: 0 });
+
+   
+
+    walls = [...mapData[selectedMapId].walls];
+
+    if (selectedMode === 'GemGrab' && selectedMapId === 'Arena') walls = walls.filter(w => w.w !== 150);
+
+    resetRound();
+
+    gameLoop();
+
 };
- 
+
+ 
+
 function resetRound() {
-    document.getElementById('ws-hud').innerText = `WIN STREAK: ${winStreak}`;
-   
-    // PLAYER FULL RESET (Keeps Super Charge)
-    player.x = 150; player.y = 300;
-    player.hp = player.maxHp;
-    player.gemCount = 0;  
-    player.ammo = 3;      
-    player.isJumping = false;
- 
-    // BOT FULL RESET
-    bot.maxHp = 100 + (winStreak * 80);
-    bot.hp = bot.maxHp;
-    bot.x = 800; bot.y = 300;
-    bot.poison = 0;
-    bot.gemCount = 0;     
-    
-    // CLEAR FIELD
-    projectiles = [];
-    enemyProjectiles = [];
-    staticZones = [];
-    slashes = [];
-    particles = [];
-    gems = [];            
-    minions = [];
-   
-    gemMineTimer = 0;
-    countdownTimer = 900;
+
+    document.getElementById('ws-hud').innerText = `WIN STREAK: ${winStreak}`;
+
+   
+
+    // PLAYER FULL RESET (Keeps Super Charge)
+
+    player.x = 150; player.y = 300;
+
+    player.hp = player.maxHp;
+
+    player.gemCount = 0;  
+
+    player.ammo = 3;      
+
+    player.isJumping = false;
+
+ 
+
+    // BOT FULL RESET
+
+    bot.maxHp = 100 + (winStreak * 80);
+
+    bot.hp = bot.maxHp;
+
+    bot.x = 800; bot.y = 300;
+
+    bot.poison = 0;
+
+    bot.gemCount = 0;     
+
+    
+
+    // CLEAR FIELD
+
+    projectiles = [];
+
+    enemyProjectiles = [];
+
+    staticZones = [];
+
+    slashes = [];
+
+    particles = [];
+
+    gems = [];            
+
+    minions = [];
+
+   
+
+    gemMineTimer = 0;
+
+    countdownTimer = 900;
+
 }
- 
+
+ 
+
 window.backToMenu = () => {
-    gameState = "MENU"; winStreak = 0;
-    cancelAnimationFrame(animationId);
-    document.getElementById('menu').style.display = "block";
-    canvas.style.display = "none";
-    document.getElementById('hud').style.display = "none";
-    document.getElementById('ws-hud').style.display = "none";
-    document.getElementById('exit-btn').style.display = "none";
-    document.getElementById('mode-section').style.display = "none";
-    document.getElementById('map-section').style.display = "none";
-    document.getElementById('countdown-display').style.display = 'none';
+
+    gameState = "MENU"; winStreak = 0;
+
+    cancelAnimationFrame(animationId);
+
+    document.getElementById('menu').style.display = "block";
+
+    canvas.style.display = "none";
+
+    document.getElementById('hud').style.display = "none";
+
+    document.getElementById('ws-hud').style.display = "none";
+
+    document.getElementById('exit-btn').style.display = "none";
+
+    document.getElementById('mode-section').style.display = "none";
+
+    document.getElementById('map-section').style.display = "none";
+
+    document.getElementById('countdown-display').style.display = 'none';
+
 };
- 
+
+ 
+
 // --- PHYSICS & LOGIC ---
+
 canvas.onmousemove = (e) => { const r = canvas.getBoundingClientRect(); mouseX = e.clientX - r.left; mouseY = e.clientY - r.top; };
+
 function checkWall(x, y, r) { return walls.some(w => x + r > w.x && x - r < w.x + w.w && y + r > w.y && y - r < w.y + w.h); }
- 
+
+ 
+
 function spawnParticles(x, y, color, count) {
-    for(let i=0; i<count; i++) particles.push({ x: x, y: y, vx: rnd(-3, 3), vy: rnd(-3, 3), life: rnd(15, 30), color: color, size: rnd(2, 5) });
+
+    for(let i=0; i<count; i++) particles.push({ x: x, y: y, vx: rnd(-3, 3), vy: rnd(-3, 3), life: rnd(15, 30), color: color, size: rnd(2, 5) });
+
 }
+
 function spawnDust(x, y) {
-    if (Math.random() > 0.3) return;
-    particles.push({x: x, y: y+10, vx: rnd(-1, 1), vy: rnd(-1, 0), life: 20, color: 'rgba(200,200,200,0.3)', size: 4});
+
+    if (Math.random() > 0.3) return;
+
+    particles.push({x: x, y: y+10, vx: rnd(-1, 1), vy: rnd(-1, 0), life: 20, color: 'rgba(200,200,200,0.3)', size: 4});
+
 }
+
 function logKill(killerName, killerColor, victimName, victimColor) {
-    const el = document.getElementById('kill-feed');
-    const msg = document.createElement('div');
-    msg.className = 'kill-msg';
-    msg.innerHTML = `<span style="color:${killerColor}">${killerName}</span> ☠️ <span style="color:${victimColor}">${victimName}</span>`;
-    el.prepend(msg);
-    setTimeout(() => msg.remove(), 4000);
+
+    const el = document.getElementById('kill-feed');
+
+    const msg = document.createElement('div');
+
+    msg.className = 'kill-msg';
+
+    msg.innerHTML = `<span style="color:${killerColor}">${killerName}</span> ☠️ <span style="color:${victimColor}">${victimName}</span>`;
+
+    el.prepend(msg);
+
+    setTimeout(() => msg.remove(), 4000);
+
 }
- 
+
+ 
+
 // --- GEM LOGIC ---
+
 function dropGems(x, y, count) {
-    for(let i=0; i<count; i++) {
-        let ang = Math.random() * Math.PI * 2, dist = 30 + Math.random() * 40;
-        gems.push({ x: x, y: y, tx: x + Math.cos(ang)*dist, ty: y + Math.sin(ang)*dist, life: 9999 });
-    }
+
+    for(let i=0; i<count; i++) {
+
+        let ang = Math.random() * Math.PI * 2, dist = 30 + Math.random() * 40;
+
+        gems.push({ x: x, y: y, tx: x + Math.cos(ang)*dist, ty: y + Math.sin(ang)*dist, life: 9999 });
+
+    }
+
 }
- 
+
+ 
+
 // --- FULL COMBAT ---
+
 canvas.onclick = () => {
-    if (player.ammo < 1 || player.isJumping || gameState !== "PLAYING") return;
-    const ang = Math.atan2(mouseY - player.y, mouseX - player.x);
-   
-    if (selectedClass === 'Square&Circle') {
-         // Thrower Logic: Projectile arcs over walls
-         let dist = Math.min(250, Math.hypot(mouseX - player.x, mouseY - player.y));
-         let tx = player.x + Math.cos(ang) * dist;
-         let ty = player.y + Math.sin(ang) * dist;
-         // Store start pos and total dist for the Arc Math
-         spawnBullet(player.x, player.y, ang, 10, player.clr, player.dmg, 30, 12, {
-             isSquareThrow: true, tx: tx, ty: ty, startX: player.x, startY: player.y, totalDist: dist
-         });
-    }
-    else if (selectedClass === 'Case-Oh') {
-        spawnBullet(player.x, player.y, ang, 10, '#e67e22', player.dmg, 60, 15, { isBurger: true });
-    }
-    else if (selectedClass === 'CUSTOM') {
-         let count = customStats.aCount, spread = customStats.aSpread, startAng = ang - (spread / 2);
-         let step = count > 1 ? spread / (count - 1) : 0;
-         if (spread >= Math.PI * 2) { startAng = ang; step = (Math.PI * 2) / count; }
-         for (let i = 0; i < count; i++) spawnBullet(player.x, player.y, count===1 ? ang : startAng + (i * step), customStats.aSpd, customStats.clr, customStats.aDmg, customStats.aLife, customStats.aSize);
-    }
-    else if (['Primo', 'Edgar', 'AMAAN'].includes(selectedClass)) {
-        let range = selectedClass === 'AMAAN' ? 90 : 60;
-        let color = selectedClass === 'AMAAN' ? 'rgba(255, 215, 0, 0.8)' : 'rgba(255,0,0,0.3)';
-        slashes.push({x: player.x, y: player.y, ang: ang, life: 12, r: range, clr: color});
-        const dist = Math.hypot(player.x - bot.x, player.y - bot.y);
-        const angToBot = Math.atan2(bot.y - player.y, bot.x - player.x);
-        let diff = Math.abs(ang - angToBot);
-        while (diff > Math.PI) diff = Math.abs(diff - Math.PI * 2);
-        if (dist < range + 20 + bot.r && diff < 1.1) hitEnemy(player.dmg);
-    }
-    else if (selectedClass === 'Mortis') {
-        let nx = player.x + Math.cos(ang) * 125, ny = player.y + Math.sin(ang) * 125;
-        if (!checkWall(nx, ny, player.r) && nx > 30 && nx < 920 && ny > 30 && ny < 570) { player.x = nx; player.y = ny; spawnDust(player.x, player.y); }
-        if (Math.hypot(player.x - bot.x, player.y - bot.y) < 85 + bot.r) hitEnemy(player.dmg);
-        slashes.push({x: player.x, y: player.y, ang: ang, life: 10, r: 60, clr: 'rgba(255,255,255,0.4)'});
-    }
-    else if (selectedClass === 'Poco') {
-        for(let i=-0.4; i<=0.4; i+=0.2) spawnBullet(player.x, player.y, ang+i, 11, player.clr, player.dmg, 35, 12);
-        createFloatingText(player.x, player.y - 40, "♫", player.clr);
-    }
-    else if (selectedClass === 'Crow') {
-        for(let i=-0.25; i<=0.25; i+=0.25) spawnBullet(player.x, player.y, ang+i, 15, '#2ecc71', player.dmg, 35, 7, {isPoison: true});
-    }
-    else if (selectedClass === 'Spike') spawnBullet(player.x, player.y, ang, 14, '#27ae60', player.dmg, 45, 18, {isSpike: true});
-    else if (selectedClass === 'Colt') {
-        for(let i=0; i<6; i++) setTimeout(() => spawnBullet(player.x, player.y, ang, 18, '#fff', player.dmg, 50, 7), i*80);
-    }
-    else if (selectedClass === 'Shelly') {
-        for(let i=-0.4; i<=0.4; i+=0.2) spawnBullet(player.x, player.y, ang+i, 13, '#ff0', player.dmg, 25, 8);
-    }
-    else if (selectedClass === 'Duck') {
-        for(let i=0; i<5; i++) spawnBullet(player.x, player.y, Math.random() * Math.PI * 2, 12, '#3498db', player.dmg, 40, 6);
-    }
-    else {
-        spawnBullet(player.x, player.y, ang, 15, player.clr, player.dmg, 50, 10);
-    }
-    player.ammo -= 1; player.reload = player.rel;
+
+    if (player.ammo < 1 || player.isJumping || gameState !== "PLAYING") return;
+
+    const ang = Math.atan2(mouseY - player.y, mouseX - player.x);
+
+   
+
+    if (selectedClass === 'Square&Circle') {
+
+         // Thrower Logic: Projectile arcs over walls
+
+         let dist = Math.min(250, Math.hypot(mouseX - player.x, mouseY - player.y));
+
+         let tx = player.x + Math.cos(ang) * dist;
+
+         let ty = player.y + Math.sin(ang) * dist;
+
+         // Store start pos and total dist for the Arc Math
+
+         spawnBullet(player.x, player.y, ang, 10, player.clr, player.dmg, 30, 12, {
+
+             isSquareThrow: true, tx: tx, ty: ty, startX: player.x, startY: player.y, totalDist: dist
+
+         });
+
+    }
+
+    else if (selectedClass === 'Case-Oh') {
+
+        spawnBullet(player.x, player.y, ang, 10, '#e67e22', player.dmg, 60, 15, { isBurger: true });
+
+    }
+
+    else if (selectedClass === 'CUSTOM') {
+
+         let count = customStats.aCount, spread = customStats.aSpread, startAng = ang - (spread / 2);
+
+         let step = count > 1 ? spread / (count - 1) : 0;
+
+         if (spread >= Math.PI * 2) { startAng = ang; step = (Math.PI * 2) / count; }
+
+         for (let i = 0; i < count; i++) spawnBullet(player.x, player.y, count===1 ? ang : startAng + (i * step), customStats.aSpd, customStats.clr, customStats.aDmg, customStats.aLife, customStats.aSize);
+
+    }
+
+    else if (['Primo', 'Edgar', 'AMAAN'].includes(selectedClass)) {
+
+        let range = selectedClass === 'AMAAN' ? 90 : 60;
+
+        let color = selectedClass === 'AMAAN' ? 'rgba(255, 215, 0, 0.8)' : 'rgba(255,0,0,0.3)';
+
+        slashes.push({x: player.x, y: player.y, ang: ang, life: 12, r: range, clr: color});
+
+        const dist = Math.hypot(player.x - bot.x, player.y - bot.y);
+
+        const angToBot = Math.atan2(bot.y - player.y, bot.x - player.x);
+
+        let diff = Math.abs(ang - angToBot);
+
+        while (diff > Math.PI) diff = Math.abs(diff - Math.PI * 2);
+
+        if (dist < range + 20 + bot.r && diff < 1.1) hitEnemy(player.dmg);
+
+    }
+
+    else if (selectedClass === 'Mortis') {
+
+        let nx = player.x + Math.cos(ang) * 125, ny = player.y + Math.sin(ang) * 125;
+
+        if (!checkWall(nx, ny, player.r) && nx > 30 && nx < 920 && ny > 30 && ny < 570) { player.x = nx; player.y = ny; spawnDust(player.x, player.y); }
+
+        if (Math.hypot(player.x - bot.x, player.y - bot.y) < 85 + bot.r) hitEnemy(player.dmg);
+
+        slashes.push({x: player.x, y: player.y, ang: ang, life: 10, r: 60, clr: 'rgba(255,255,255,0.4)'});
+
+    }
+
+    else if (selectedClass === 'Poco') {
+
+        for(let i=-0.4; i<=0.4; i+=0.2) spawnBullet(player.x, player.y, ang+i, 11, player.clr, player.dmg, 35, 12);
+
+        createFloatingText(player.x, player.y - 40, "♫", player.clr);
+
+    }
+
+    else if (selectedClass === 'Crow') {
+
+        for(let i=-0.25; i<=0.25; i+=0.25) spawnBullet(player.x, player.y, ang+i, 15, '#2ecc71', player.dmg, 35, 7, {isPoison: true});
+
+    }
+
+    else if (selectedClass === 'Spike') spawnBullet(player.x, player.y, ang, 14, '#27ae60', player.dmg, 45, 18, {isSpike: true});
+
+    else if (selectedClass === 'Colt') {
+
+        for(let i=0; i<6; i++) setTimeout(() => spawnBullet(player.x, player.y, ang, 18, '#fff', player.dmg, 50, 7), i*80);
+
+    }
+
+    else if (selectedClass === 'Shelly') {
+
+        for(let i=-0.4; i<=0.4; i+=0.2) spawnBullet(player.x, player.y, ang+i, 13, '#ff0', player.dmg, 25, 8);
+
+    }
+
+    else if (selectedClass === 'Duck') {
+
+        for(let i=0; i<5; i++) spawnBullet(player.x, player.y, Math.random() * Math.PI * 2, 12, '#3498db', player.dmg, 40, 6);
+
+    }
+
+    else {
+
+        spawnBullet(player.x, player.y, ang, 15, player.clr, player.dmg, 50, 10);
+
+    }
+
+    player.ammo -= 1; player.reload = player.rel;
+
 };
- 
+
+ 
+
 // --- SUPER LOGIC ---
+
 function triggerSuper() {
-    if (player.super < 100 || player.isJumping || gameState !== "PLAYING") return;
-    const ang = Math.atan2(mouseY - player.y, mouseX - player.x);
-    player.super = 0;
- 
-    if (selectedClass === 'Square&Circle') {
-        createFloatingText(player.x, player.y - 60, "CIRCLE SPAWNED!", "#00ccff");
-        // Remove existing minion owned by player so only 1 exists
-        minions = minions.filter(m => m.owner !== 'player');
-       
-        minions.push({
-            x: player.x, y: player.y, r: 20, hp: 1500, maxHp: 1500, spd: 4.5,
-            owner: 'player', color: '#00ccff', shootTimer: 0, life: 1000
-        });
-    }
-    else if (selectedClass === 'AMAAN') {
-        createFloatingText(player.x, player.y - 60, "AMAAN KICK!!", "#f1c40f");
-        slashes.push({x: player.x, y: player.y, ang: ang, life: 25, r: 250, clr: 'rgba(255, 215, 0, 0.9)'});
-        screenShake = 30;
-        if (Math.hypot(player.x - bot.x, player.y - bot.y) < 260) hitEnemy(250);
-    }
-    else if (selectedClass === 'CUSTOM') {
-        createFloatingText(player.x, player.y - 60, "CUSTOM SUPER!", customStats.clr);
-        let count = customStats.sCount, spread = customStats.sSpread, startAng = ang - (spread / 2);
-        let step = count > 1 ? spread / (count - 1) : 0;
-        if (spread >= Math.PI * 2) { startAng = ang; step = (Math.PI * 2) / count; }
-        for (let i = 0; i < count; i++) spawnBullet(player.x, player.y, count===1 ? ang : startAng + (i * step), customStats.sSpd, customStats.clr, customStats.sDmg, customStats.sLife, customStats.sSize);
-    }
-    else if (selectedClass === 'Colt') {
-        for(let i=0; i<12; i++) setTimeout(() => spawnBullet(player.x, player.y, ang, 22, '#fff', 8, 60, 12), i*50);
-    }
-    else if (selectedClass === 'Mortis') {
-        spawnBullet(player.x, player.y, ang, 12, '#a29bfe', 30, 80, 40, {isBat: true});
-    }
-    else if (selectedClass === 'Poco') {
-        player.hp = Math.min(player.maxHp, player.hp + 60);
-        createFloatingText(player.x, player.y - 40, "HEAL!", "#0f0");
-    }
-    else if (selectedClass === 'Spike') {
-        staticZones.push({ x: mouseX, y: mouseY, r: 160, clr: 'rgba(39, 174, 96, 0.6)', life: 300, dmg: 2 });
-    }
-    else if (['Piper', 'Crow', 'Edgar', 'Primo', 'Shelly', 'Case-Oh'].includes(selectedClass)) {
-        if (selectedClass === 'Shelly') {
-            screenShake = 25; for(let i=-1; i<=1; i+=0.12) spawnBullet(player.x, player.y, ang+i, 16, '#f0f', 15, 38, 12);
-        } else {
-            player.isJumping = true; player.jumpProg = 0;
-            const sX = player.x, sY = player.y;
-            let tX = Math.max(60, Math.min(890, mouseX)), tY = Math.max(60, Math.min(540, mouseY));
-            if (checkWall(tX, tY, player.r)) tX = sX;
- 
-            if (selectedClass === 'Piper') for(let i=0; i<4; i++) staticZones.push({x: sX + rnd(-40,40), y: sY + rnd(-40,40), r: 60, clr: 'rgba(255,0,0,0.5)', life: 30, dmg: 40, isExplosion: true});
-           
-            let jInt = setInterval(() => {
-                player.jumpProg += 0.04;
-                player.x = sX + (tX - sX) * player.jumpProg; player.y = sY + (tY - sY) * player.jumpProg;
-                if (player.jumpProg >= 1) {
-                    clearInterval(jInt); player.isJumping = false; screenShake = 20;
-                   
-                    if (selectedClass === 'Case-Oh') {
-                        screenShake = 300;
-                        slashes.push({x: player.x, y: player.y, ang: 0, life: 20, r: 200, clr: 'rgba(255, 100, 0, 0.5)'});
-                        let dist = Math.hypot(player.x - bot.x, player.y - bot.y);
-                        if (dist < player.r + bot.r) hitEnemy(9999);
-                        else if (dist < 250) hitEnemy(100);
-                    }
-                    if (selectedClass === 'Crow') for(let i=0; i<Math.PI*2; i+=0.4) spawnBullet(player.x, player.y, i, 14, '#2ecc71', 4, 25, 8, {isPoison: true});
-                    if (selectedClass === 'Primo' && Math.hypot(player.x-bot.x, player.y-bot.y) < 140) hitEnemy(50);
-                    if (selectedClass === 'Edgar') { player.spd *= 1.5; setTimeout(() => player.spd /= 1.5, 3000); }
-                }
-            }, 20);
-        }
-    }
+
+    if (player.super < 100 || player.isJumping || gameState !== "PLAYING") return;
+
+    const ang = Math.atan2(mouseY - player.y, mouseX - player.x);
+
+    player.super = 0;
+
+ 
+
+    if (selectedClass === 'Square&Circle') {
+
+        createFloatingText(player.x, player.y - 60, "CIRCLE SPAWNED!", "#00ccff");
+
+        // Remove existing minion owned by player so only 1 exists
+
+        minions = minions.filter(m => m.owner !== 'player');
+
+       
+
+        minions.push({
+
+            x: player.x, y: player.y, r: 20, hp: 1500, maxHp: 1500, spd: 4.5,
+
+            owner: 'player', color: '#00ccff', shootTimer: 0, life: 1000
+
+        });
+
+    }
+
+    else if (selectedClass === 'AMAAN') {
+
+        createFloatingText(player.x, player.y - 60, "AMAAN KICK!!", "#f1c40f");
+
+        slashes.push({x: player.x, y: player.y, ang: ang, life: 25, r: 250, clr: 'rgba(255, 215, 0, 0.9)'});
+
+        screenShake = 30;
+
+        if (Math.hypot(player.x - bot.x, player.y - bot.y) < 260) hitEnemy(250);
+
+    }
+
+    else if (selectedClass === 'CUSTOM') {
+
+        createFloatingText(player.x, player.y - 60, "CUSTOM SUPER!", customStats.clr);
+
+        let count = customStats.sCount, spread = customStats.sSpread, startAng = ang - (spread / 2);
+
+        let step = count > 1 ? spread / (count - 1) : 0;
+
+        if (spread >= Math.PI * 2) { startAng = ang; step = (Math.PI * 2) / count; }
+
+        for (let i = 0; i < count; i++) spawnBullet(player.x, player.y, count===1 ? ang : startAng + (i * step), customStats.sSpd, customStats.clr, customStats.sDmg, customStats.sLife, customStats.sSize);
+
+    }
+
+    else if (selectedClass === 'Colt') {
+
+        for(let i=0; i<12; i++) setTimeout(() => spawnBullet(player.x, player.y, ang, 22, '#fff', 8, 60, 12), i*50);
+
+    }
+
+    else if (selectedClass === 'Mortis') {
+
+        spawnBullet(player.x, player.y, ang, 12, '#a29bfe', 30, 80, 40, {isBat: true});
+
+    }
+
+    else if (selectedClass === 'Poco') {
+
+        player.hp = Math.min(player.maxHp, player.hp + 60);
+
+        createFloatingText(player.x, player.y - 40, "HEAL!", "#0f0");
+
+    }
+
+    else if (selectedClass === 'Spike') {
+
+        staticZones.push({ x: mouseX, y: mouseY, r: 160, clr: 'rgba(39, 174, 96, 0.6)', life: 300, dmg: 2 });
+
+    }
+
+    else if (['Piper', 'Crow', 'Edgar', 'Primo', 'Shelly', 'Case-Oh'].includes(selectedClass)) {
+
+        if (selectedClass === 'Shelly') {
+
+            screenShake = 25; for(let i=-1; i<=1; i+=0.12) spawnBullet(player.x, player.y, ang+i, 16, '#f0f', 15, 38, 12);
+
+        } else {
+
+            player.isJumping = true; player.jumpProg = 0;
+
+            const sX = player.x, sY = player.y;
+
+            let tX = Math.max(60, Math.min(890, mouseX)), tY = Math.max(60, Math.min(540, mouseY));
+
+            if (checkWall(tX, tY, player.r)) tX = sX;
+
+ 
+
+            if (selectedClass === 'Piper') for(let i=0; i<4; i++) staticZones.push({x: sX + rnd(-40,40), y: sY + rnd(-40,40), r: 60, clr: 'rgba(255,0,0,0.5)', life: 30, dmg: 40, isExplosion: true});
+
+           
+
+            let jInt = setInterval(() => {
+
+                player.jumpProg += 0.04;
+
+                player.x = sX + (tX - sX) * player.jumpProg; player.y = sY + (tY - sY) * player.jumpProg;
+
+                if (player.jumpProg >= 1) {
+
+                    clearInterval(jInt); player.isJumping = false; screenShake = 20;
+
+                   
+
+                    if (selectedClass === 'Case-Oh') {
+
+                        screenShake = 300;
+
+                        slashes.push({x: player.x, y: player.y, ang: 0, life: 20, r: 200, clr: 'rgba(255, 100, 0, 0.5)'});
+
+                        let dist = Math.hypot(player.x - bot.x, player.y - bot.y);
+
+                        if (dist < player.r + bot.r) hitEnemy(9999);
+
+                        else if (dist < 250) hitEnemy(100);
+
+                    }
+
+                    if (selectedClass === 'Crow') for(let i=0; i<Math.PI*2; i+=0.4) spawnBullet(player.x, player.y, i, 14, '#2ecc71', 4, 25, 8, {isPoison: true});
+
+                    if (selectedClass === 'Primo' && Math.hypot(player.x-bot.x, player.y-bot.y) < 140) hitEnemy(50);
+
+                    if (selectedClass === 'Edgar') { player.spd *= 1.5; setTimeout(() => player.spd /= 1.5, 3000); }
+
+                }
+
+            }, 20);
+
+        }
+
+    }
+
 }
- 
+
+ 
+
 function spawnBullet(x, y, ang, spd, clr, dmg, life, size=8, extra={}) {
-    projectiles.push({ x, y, vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd, clr, dmg, life, size, ...extra });
+
+    projectiles.push({ x, y, vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd, clr, dmg, life, size, ...extra });
+
 }
- 
+
+ 
+
 function hitEnemy(dmg, isPoison = false) {
-    bot.hp -= dmg; bot.hitFlash = 6;
-    if (!isPoison) { player.super = Math.min(100, player.super + player.chrg); screenShake = 6; }
-    createFloatingText(bot.x, bot.y - 40, Math.round(dmg), isPoison ? "#2ecc71" : "#ff0");
-    spawnParticles(bot.x, bot.y, "#fff", 5);
+
+    bot.hp -= dmg; bot.hitFlash = 6;
+
+    if (!isPoison) { player.super = Math.min(100, player.super + player.chrg); screenShake = 6; }
+
+    createFloatingText(bot.x, bot.y - 40, Math.round(dmg), isPoison ? "#2ecc71" : "#ff0");
+
+    spawnParticles(bot.x, bot.y, "#fff", 5);
+
 }
- 
+
+ 
+
 function update() {
-    // --- GEM SPAWNING & UPDATE ---
-    if (selectedMode === 'GemGrab') {
-        gemMineTimer++;
-        if (gemMineTimer > 200 && gems.length < 20) {
-            gemMineTimer = 0;
-            createFloatingText(475, 300, "💎", "#e056fd");
-            gems.push({ x: 475, y: 300, tx: 475 + rnd(-60,60), ty: 300 + rnd(-60,60), life: 9999 });
-        }
-       
-        let leader = null;
-        if (player.gemCount >= 10 && player.gemCount > bot.gemCount) leader = 'player';
-        else if (bot.gemCount >= 10 && bot.gemCount > player.gemCount) leader = 'bot';
- 
-        const cdEl = document.getElementById('countdown-display');
-        if (leader) {
-            countdownTimer--;
-            let sec = Math.ceil(countdownTimer / 60);
-            cdEl.style.display = 'block';
-            cdEl.innerText = sec;
-           
-            if (countdownTimer <= 0) {
-                if (leader === 'player') {
-                    winStreak++;
-                    createFloatingText(475, 300, "ROUND WON!", "#0f0");
-                    resetRound();
-                } else {
-                    alert("DEFEAT! BOT KEPT THE GEMS!");
-                    backToMenu();
-                }
-            }
-        } else {
-            countdownTimer = 900;
-            cdEl.style.display = 'none';
-        }
- 
-        gems.forEach(g => {
-            g.x += (g.tx - g.x) * 0.1; g.y += (g.ty - g.y) * 0.1;
-            if (Math.hypot(player.x - g.x, player.y - g.y) < player.r + 10) { player.gemCount++; g.life = 0; createFloatingText(player.x, player.y-50, "+1", "#d63031"); }
-            if (Math.hypot(bot.x - g.x, bot.y - g.y) < bot.r + 10) { bot.gemCount++; g.life = 0; }
-        });
-        gems = gems.filter(g => g.life > 0);
-        document.getElementById('p-score').innerText = `YOU: ${player.gemCount} 💎`;
-        document.getElementById('e-score').innerText = `BOT: ${bot.gemCount} 💎`;
-    } else {
-        document.getElementById('p-score').innerText = `YOU`;
-        document.getElementById('e-score').innerText = `BOT`;
-        document.getElementById('countdown-display').style.display = 'none';
-    }
- 
-    if (player.hitFlash > 0) player.hitFlash--;
-    if (bot.hitFlash > 0) bot.hitFlash--;
-    if (selectedClass === 'Edgar') player.super = Math.min(100, player.super + 0.1);
-    if (bot.poison > 0 && Math.floor(Date.now()/500) % 2 === 0) { hitEnemy(2, true); bot.poison--; }
- 
-    // --- CUBE (MINION) AI ---
-    minions.forEach((m, idx) => {
-        let target = m.owner === 'player' ? bot : player;
-        let ang = Math.atan2(target.y - m.y, target.x - m.x);
-        let dist = Math.hypot(target.x - m.x, target.y - m.y);
-       
-        // Move towards enemy with WALL COLLISION
-        if (dist > 150) {
-            let mNextX = m.x + Math.cos(ang) * m.spd;
-            let mNextY = m.y + Math.sin(ang) * m.spd;
-           
-            if (!checkWall(mNextX, m.y, m.r)) m.x = mNextX;
-            if (!checkWall(m.x, mNextY, m.r)) m.y = mNextY;
-        }
- 
-        // Shoot at enemy
-        if (++m.shootTimer > 40 && dist < 350) {
-            // Shoots CIRCLES now
-            spawnBullet(m.x, m.y, ang, 14, m.color, 15, 40, 6, { isMinionShot: true, owner: m.owner, shape: 'circle' });
-            m.shootTimer = 0;
-        }
-    });
- 
-    // BOT AI
-    const angToP = Math.atan2(player.y - bot.y, player.x - bot.x);
-    if (--bot.moveTimer <= 0) {
-        if (selectedMode === 'GemGrab' && gems.length > 0) {
-            let closeGem = gems.reduce((prev, curr) => Math.hypot(bot.x-curr.x, bot.y-curr.y) < Math.hypot(bot.x-prev.x, bot.y-prev.y) ? curr : prev);
-            bot.targetX = closeGem.x; bot.targetY = closeGem.y;
-        } else if (selectedMode === 'GemGrab' && bot.gemCount >= 10) {
-            bot.targetX = 800; bot.targetY = 100;
-        } else {
-            bot.targetX = Math.max(60, Math.min(890, player.x + rnd(-250, 250)));
-            bot.targetY = Math.max(60, Math.min(540, player.y + rnd(-250, 250)));
-        }
-        bot.moveTimer = 35;
-    }
-    let bNextX = bot.x + (bot.targetX - bot.x) * 0.04, bNextY = bot.y + (bot.targetY - bot.y) * 0.04;
-   
-    if (Math.hypot(bot.targetX - bot.x, bot.targetY - bot.y) > 2) {
-        bot.walkFrame += 0.2; spawnDust(bot.x, bot.y);
-        if (!checkWall(bNextX, bot.y, bot.r)) bot.x = bNextX;
-        if (!checkWall(bot.x, bNextY, bot.r)) bot.y = bNextY;
-    }
- 
-    // AI BOT NOW SHOOTS CIRCLES
-    if (++bot.shootTimer > 85) {
-        enemyProjectiles.push({ x: bot.x, y: bot.y, vx: Math.cos(angToP)*9, vy: Math.sin(angToP)*9, clr: '#f44', dmg: 18, life: 60, size: 10, shape: 'circle' });
-        bot.shootTimer = 0;
-    }
-   
-    // PLAYER
-    if (!player.isJumping) {
-        let nx = player.x, ny = player.y, moving = false;
-        if (keys['w']) { ny -= player.spd; moving = true; } if (keys['s']) { ny += player.spd; moving = true; }
-        if (keys['a']) { nx -= player.spd; moving = true; } if (keys['d']) { nx += player.spd; moving = true; }
-        if (moving) { player.walkFrame += 0.3; spawnDust(player.x, player.y); } else player.walkFrame = 0;
- 
-        if (!checkWall(nx, player.y, player.r) && nx > 30 && nx < 920) player.x = nx;
-        if (!checkWall(player.x, ny, player.r) && ny > 30 && ny < 570) player.y = ny;
-        if (selectedClass === 'AMAAN' && Math.hypot(player.x - bot.x, player.y - bot.y) < 100) { bot.hp -= 0.5; }
-    }
-    if (player.ammo < 3 && --player.reload <= 0) { player.ammo++; player.reload = player.rel; }
- 
-    staticZones.forEach(z => {
-        if(z.follow) { z.x = player.x; z.y = player.y; }
-        if(Math.hypot(bot.x-z.x, bot.y-z.y) < z.r) {
-            if (z.isExplosion && z.life === 29) hitEnemy(z.dmg);
-            else if (!z.isExplosion) { bot.hp -= z.dmg; }
-        }
-        z.life--;
-    });
-    staticZones = staticZones.filter(z => z.life > 0);
-    particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.life--; p.size *= 0.95; });
-    particles = particles.filter(p => p.life > 0);
- 
-    handleProjectiles(projectiles, bot, true);
-    handleProjectiles(enemyProjectiles, player, false);
-   
-    // DEATH LOGIC
-    if (player.hp <= 0) {
-        logKill("BOT", "#e74c3c", "YOU", "#3498db");
-        if (selectedMode === 'GemGrab') {
-            dropGems(player.x, player.y, player.gemCount);
-            player.gemCount = 0;
-            player.x = 150; player.y = 300; player.hp = player.maxHp;
-            createFloatingText(player.x, player.y - 40, "RESPAWN!", "#fff");
-        } else {
-            backToMenu();
-        }
-        spawnParticles(player.x, player.y, player.clr, 20);
-        screenShake = 30;
-    }
-    if (bot.hp <= 0) {
-        logKill("YOU", "#3498db", "BOT", "#e74c3c");
-        if (selectedMode === 'GemGrab') {
-            dropGems(bot.x, bot.y, bot.gemCount);
-            bot.gemCount = 0;
-            bot.x = 800; bot.y = 300; bot.hp = bot.maxHp;
-        } else {
-            winStreak++; resetRound();
-        }
-        spawnParticles(bot.x, bot.y, "#fff", 20);
-        screenShake = 20;
-    }
+
+    // --- GEM SPAWNING & UPDATE ---
+
+    if (selectedMode === 'GemGrab') {
+
+        gemMineTimer++;
+
+        if (gemMineTimer > 200 && gems.length < 20) {
+
+            gemMineTimer = 0;
+
+            createFloatingText(475, 300, "💎", "#e056fd");
+
+            gems.push({ x: 475, y: 300, tx: 475 + rnd(-60,60), ty: 300 + rnd(-60,60), life: 9999 });
+
+        }
+
+       
+
+        let leader = null;
+
+        if (player.gemCount >= 10 && player.gemCount > bot.gemCount) leader = 'player';
+
+        else if (bot.gemCount >= 10 && bot.gemCount > player.gemCount) leader = 'bot';
+
+ 
+
+        const cdEl = document.getElementById('countdown-display');
+
+        if (leader) {
+
+            countdownTimer--;
+
+            let sec = Math.ceil(countdownTimer / 60);
+
+            cdEl.style.display = 'block';
+
+            cdEl.innerText = sec;
+
+           
+
+            if (countdownTimer <= 0) {
+
+                if (leader === 'player') {
+
+                    winStreak++;
+
+                    createFloatingText(475, 300, "ROUND WON!", "#0f0");
+
+                    resetRound();
+
+                } else {
+
+                    alert("DEFEAT! BOT KEPT THE GEMS!");
+
+                    backToMenu();
+
+                }
+
+            }
+
+        } else {
+
+            countdownTimer = 900;
+
+            cdEl.style.display = 'none';
+
+        }
+
+ 
+
+        gems.forEach(g => {
+
+            g.x += (g.tx - g.x) * 0.1; g.y += (g.ty - g.y) * 0.1;
+
+            if (Math.hypot(player.x - g.x, player.y - g.y) < player.r + 10) { player.gemCount++; g.life = 0; createFloatingText(player.x, player.y-50, "+1", "#d63031"); }
+
+            if (Math.hypot(bot.x - g.x, bot.y - g.y) < bot.r + 10) { bot.gemCount++; g.life = 0; }
+
+        });
+
+        gems = gems.filter(g => g.life > 0);
+
+        document.getElementById('p-score').innerText = `YOU: ${player.gemCount} 💎`;
+
+        document.getElementById('e-score').innerText = `BOT: ${bot.gemCount} 💎`;
+
+    } else {
+
+        document.getElementById('p-score').innerText = `YOU`;
+
+        document.getElementById('e-score').innerText = `BOT`;
+
+        document.getElementById('countdown-display').style.display = 'none';
+
+    }
+
+ 
+
+    if (player.hitFlash > 0) player.hitFlash--;
+
+    if (bot.hitFlash > 0) bot.hitFlash--;
+
+    if (selectedClass === 'Edgar') player.super = Math.min(100, player.super + 0.1);
+
+    if (bot.poison > 0 && Math.floor(Date.now()/500) % 2 === 0) { hitEnemy(2, true); bot.poison--; }
+
+ 
+
+    // --- CUBE (MINION) AI ---
+
+    minions.forEach((m, idx) => {
+
+        let target = m.owner === 'player' ? bot : player;
+
+        let ang = Math.atan2(target.y - m.y, target.x - m.x);
+
+        let dist = Math.hypot(target.x - m.x, target.y - m.y);
+
+       
+
+        // Move towards enemy with WALL COLLISION
+
+        if (dist > 150) {
+
+            let mNextX = m.x + Math.cos(ang) * m.spd;
+
+            let mNextY = m.y + Math.sin(ang) * m.spd;
+
+           
+
+            if (!checkWall(mNextX, m.y, m.r)) m.x = mNextX;
+
+            if (!checkWall(m.x, mNextY, m.r)) m.y = mNextY;
+
+        }
+
+ 
+
+        // Shoot at enemy
+
+        if (++m.shootTimer > 40 && dist < 350) {
+
+            // Shoots CIRCLES now
+
+            spawnBullet(m.x, m.y, ang, 14, m.color, 15, 40, 6, { isMinionShot: true, owner: m.owner, shape: 'circle' });
+
+            m.shootTimer = 0;
+
+        }
+
+    });
+
+ 
+
+    // BOT AI
+
+    const angToP = Math.atan2(player.y - bot.y, player.x - bot.x);
+
+    if (--bot.moveTimer <= 0) {
+
+        if (selectedMode === 'GemGrab' && gems.length > 0) {
+
+            let closeGem = gems.reduce((prev, curr) => Math.hypot(bot.x-curr.x, bot.y-curr.y) < Math.hypot(bot.x-prev.x, bot.y-prev.y) ? curr : prev);
+
+            bot.targetX = closeGem.x; bot.targetY = closeGem.y;
+
+        } else if (selectedMode === 'GemGrab' && bot.gemCount >= 10) {
+
+            bot.targetX = 800; bot.targetY = 100;
+
+        } else {
+
+            bot.targetX = Math.max(60, Math.min(890, player.x + rnd(-250, 250)));
+
+            bot.targetY = Math.max(60, Math.min(540, player.y + rnd(-250, 250)));
+
+        }
+
+        bot.moveTimer = 35;
+
+    }
+
+    let bNextX = bot.x + (bot.targetX - bot.x) * 0.04, bNextY = bot.y + (bot.targetY - bot.y) * 0.04;
+
+   
+
+    if (Math.hypot(bot.targetX - bot.x, bot.targetY - bot.y) > 2) {
+
+        bot.walkFrame += 0.2; spawnDust(bot.x, bot.y);
+
+        if (!checkWall(bNextX, bot.y, bot.r)) bot.x = bNextX;
+
+        if (!checkWall(bot.x, bNextY, bot.r)) bot.y = bNextY;
+
+    }
+
+ 
+
+    // AI BOT NOW SHOOTS CIRCLES
+
+    if (++bot.shootTimer > 85) {
+
+        enemyProjectiles.push({ x: bot.x, y: bot.y, vx: Math.cos(angToP)*9, vy: Math.sin(angToP)*9, clr: '#f44', dmg: 18, life: 60, size: 10, shape: 'circle' });
+
+        bot.shootTimer = 0;
+
+    }
+
+   
+
+    // PLAYER
+
+    if (!player.isJumping) {
+
+        let nx = player.x, ny = player.y, moving = false;
+
+        if (keys['w']) { ny -= player.spd; moving = true; } if (keys['s']) { ny += player.spd; moving = true; }
+
+        if (keys['a']) { nx -= player.spd; moving = true; } if (keys['d']) { nx += player.spd; moving = true; }
+
+        if (moving) { player.walkFrame += 0.3; spawnDust(player.x, player.y); } else player.walkFrame = 0;
+
+ 
+
+        if (!checkWall(nx, player.y, player.r) && nx > 30 && nx < 920) player.x = nx;
+
+        if (!checkWall(player.x, ny, player.r) && ny > 30 && ny < 570) player.y = ny;
+
+        if (selectedClass === 'AMAAN' && Math.hypot(player.x - bot.x, player.y - bot.y) < 100) { bot.hp -= 0.5; }
+
+    }
+
+    if (player.ammo < 3 && --player.reload <= 0) { player.ammo++; player.reload = player.rel; }
+
+ 
+
+    staticZones.forEach(z => {
+
+        if(z.follow) { z.x = player.x; z.y = player.y; }
+
+        if(Math.hypot(bot.x-z.x, bot.y-z.y) < z.r) {
+
+            if (z.isExplosion && z.life === 29) hitEnemy(z.dmg);
+
+            else if (!z.isExplosion) { bot.hp -= z.dmg; }
+
+        }
+
+        z.life--;
+
+    });
+
+    staticZones = staticZones.filter(z => z.life > 0);
+
+    particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.life--; p.size *= 0.95; });
+
+    particles = particles.filter(p => p.life > 0);
+
+ 
+
+    handleProjectiles(projectiles, bot, true);
+
+    handleProjectiles(enemyProjectiles, player, false);
+
+   
+
+    // DEATH LOGIC
+
+    if (player.hp <= 0) {
+
+        logKill("BOT", "#e74c3c", "YOU", "#3498db");
+
+        if (selectedMode === 'GemGrab') {
+
+            dropGems(player.x, player.y, player.gemCount);
+
+            player.gemCount = 0;
+
+            player.x = 150; player.y = 300; player.hp = player.maxHp;
+
+            createFloatingText(player.x, player.y - 40, "RESPAWN!", "#fff");
+
+        } else {
+
+            backToMenu();
+
+        }
+
+        spawnParticles(player.x, player.y, player.clr, 20);
+
+        screenShake = 30;
+
+    }
+
+    if (bot.hp <= 0) {
+
+        logKill("YOU", "#3498db", "BOT", "#e74c3c");
+
+        if (selectedMode === 'GemGrab') {
+
+            dropGems(bot.x, bot.y, bot.gemCount);
+
+            bot.gemCount = 0;
+
+            bot.x = 800; bot.y = 300; bot.hp = bot.maxHp;
+
+        } else {
+
+            winStreak++; resetRound();
+
+        }
+
+        spawnParticles(bot.x, bot.y, "#fff", 20);
+
+        screenShake = 20;
+
+    }
+
 }
- 
+
+ 
+
 function handleProjectiles(list, target, isP) {
-    for(let i=list.length-1; i>=0; i--) {
-        let b = list[i];
-        
-        // Square Thrower Logic (Arcs over walls)
-        if (b.isSquareThrow) {
-             let dx = b.tx - b.x, dy = b.ty - b.y;
-             let dist = Math.hypot(dx, dy);
-            
-             // Move projectile visually
-             b.x += (b.tx - b.x) * 0.08;
-             b.y += (b.ty - b.y) * 0.08;
-            
-             if (dist < 15) {
-                 // Landed
-                 staticZones.push({x: b.x, y: b.y, r: 60, clr: 'rgba(0,200,255,0.5)', life: 30, dmg: b.dmg, isExplosion: true});
-                 list.splice(i, 1);
-             }
-             continue; // Don't run normal wall/hit logic while in air
-        }
-       
-        b.x += b.vx; b.y += b.vy; b.life--;
-       
-        // Wall Collision (Unless it's Square's Throw)
-        if (!b.isSquareThrow && checkWall(b.x, b.y, b.size)) { spawnParticles(b.x, b.y, "#aaa", 5); list.splice(i, 1); continue; }
-       
-        // Hit Logic
-        let hitDist = target.r + b.size;
-        let hit = false;
-       
-        // Check collision with Target (Bot or Player)
-        if (Math.hypot(b.x - target.x, b.y - target.y) < hitDist && !player.isJumping && !b.isSquareThrow) {
-             hit = true;
-             if (b.isBat && isP) player.hp = Math.min(player.maxHp, player.hp + 15);
-             if (b.isPoison && isP) bot.poison = 10;
-             if (isP) hitEnemy(b.dmg); else { target.hp -= b.dmg; target.hitFlash = 6; screenShake = 5; }
-        }
-       
-        // Remove bullet if hit
-        if (hit) {
-            spawnParticles(b.x, b.y, isP ? "#555" : player.clr, 8);
-             if (b.isBurger) {
-                 staticZones.push({ x: b.x, y: b.y, r: 90, clr: 'rgba(255, 255, 255, 0.8)', life: 10, dmg: 4, isSoundwave: true });
-                 createFloatingText(b.x, b.y - 40, "BURP!", "#fff");
-                 screenShake = 15;
-            }
-            list.splice(i, 1);
-        }
-        else if (b.life <= 0) {
-            if (b.isSpike) for(let j=0; j<Math.PI*2; j+=Math.PI/3) spawnBullet(b.x, b.y, j, 11, '#27ae60', b.dmg*0.6, 25, 10);
-            if (b.isBurger) {
-                 staticZones.push({ x: b.x, y: b.y, r: 90, clr: 'rgba(255, 255, 255, 0.8)', life: 10, dmg: 4, isSoundwave: true });
-                 createFloatingText(b.x, b.y - 40, "BURP!", "#fff");
-                 screenShake = 15;
-            }
-            list.splice(i, 1);
-        }
-    }
+
+    for(let i=list.length-1; i>=0; i--) {
+
+        let b = list[i];
+
+        
+
+        // Square Thrower Logic (Arcs over walls)
+
+        if (b.isSquareThrow) {
+
+             let dx = b.tx - b.x, dy = b.ty - b.y;
+
+             let dist = Math.hypot(dx, dy);
+
+            
+
+             // Move projectile visually
+
+             b.x += (b.tx - b.x) * 0.08;
+
+             b.y += (b.ty - b.y) * 0.08;
+
+            
+
+             if (dist < 15) {
+
+                 // Landed
+
+                 staticZones.push({x: b.x, y: b.y, r: 60, clr: 'rgba(0,200,255,0.5)', life: 30, dmg: b.dmg, isExplosion: true});
+
+                 list.splice(i, 1);
+
+             }
+
+             continue; // Don't run normal wall/hit logic while in air
+
+        }
+
+       
+
+        b.x += b.vx; b.y += b.vy; b.life--;
+
+       
+
+        // Wall Collision (Unless it's Square's Throw)
+
+        if (!b.isSquareThrow && checkWall(b.x, b.y, b.size)) { spawnParticles(b.x, b.y, "#aaa", 5); list.splice(i, 1); continue; }
+
+       
+
+        // Hit Logic
+
+        let hitDist = target.r + b.size;
+
+        let hit = false;
+
+       
+
+        // Check collision with Target (Bot or Player)
+
+        if (Math.hypot(b.x - target.x, b.y - target.y) < hitDist && !player.isJumping && !b.isSquareThrow) {
+
+             hit = true;
+
+             if (b.isBat && isP) player.hp = Math.min(player.maxHp, player.hp + 15);
+
+             if (b.isPoison && isP) bot.poison = 10;
+
+             if (isP) hitEnemy(b.dmg); else { target.hp -= b.dmg; target.hitFlash = 6; screenShake = 5; }
+
+        }
+
+       
+
+        // Remove bullet if hit
+
+        if (hit) {
+
+            spawnParticles(b.x, b.y, isP ? "#555" : player.clr, 8);
+
+             if (b.isBurger) {
+
+                 staticZones.push({ x: b.x, y: b.y, r: 90, clr: 'rgba(255, 255, 255, 0.8)', life: 10, dmg: 4, isSoundwave: true });
+
+                 createFloatingText(b.x, b.y - 40, "BURP!", "#fff");
+
+                 screenShake = 15;
+
+            }
+
+            list.splice(i, 1);
+
+        }
+
+        else if (b.life <= 0) {
+
+            if (b.isSpike) for(let j=0; j<Math.PI*2; j+=Math.PI/3) spawnBullet(b.x, b.y, j, 11, '#27ae60', b.dmg*0.6, 25, 10);
+
+            if (b.isBurger) {
+
+                 staticZones.push({ x: b.x, y: b.y, r: 90, clr: 'rgba(255, 255, 255, 0.8)', life: 10, dmg: 4, isSoundwave: true });
+
+                 createFloatingText(b.x, b.y - 40, "BURP!", "#fff");
+
+                 screenShake = 15;
+
+            }
+
+            list.splice(i, 1);
+
+        }
+
+    }
+
 }
- 
+
+ 
+
 function drawEnt(x, y, clr, hp, max, ico, sc, ammo, spr, gemCount, walk, rad) {
-    let bounce = Math.sin(walk) * 3;
-    ctx.save(); ctx.translate(x, y + bounce); ctx.scale(sc, sc);
-    if (gemCount > 0) { ctx.fillStyle = "#e056fd"; ctx.font = "bold 16px Arial"; ctx.fillText(`💎 ${gemCount}`, -15, -rad - 40); }
-    if (spr >= 100) { ctx.shadowBlur = 15; ctx.shadowColor = "#ffcc00"; ctx.strokeStyle = "#ffcc00"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, rad + 4, 0, Math.PI*2); ctx.stroke(); }
-    ctx.fillStyle = clr; ctx.beginPath(); ctx.arc(0, 0, rad + 2, 0, Math.PI*2); ctx.fill();
-    ctx.shadowBlur = 0; ctx.fillStyle = "white"; ctx.font = "24px Arial"; ctx.fillText(ico, -14, 10); ctx.restore();
-   
-    const barW = 70;
-    const barY = -rad - 30;
-    ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(x-35, y+barY + bounce, barW, 6);
-    ctx.fillStyle = hp/max > 0.3 ? "#2ecc71" : "#e74c3c"; ctx.fillRect(x-35, y+barY + bounce, Math.max(0, (hp/max)*barW), 6);
-    if (sc < 2) {
-        for(let i=0; i<3; i++) { ctx.fillStyle = i < ammo ? "#ff9f43" : "#333"; ctx.fillRect(x-35 + (i*24), y+barY+9 + bounce, 22, 4); }
-        ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(x-35, y+barY+15 + bounce, barW, 4);
-        ctx.fillStyle = spr >= 100 ? "#ffcc00" : "#f1c40f"; ctx.fillRect(x-35, y+barY+15 + bounce, (spr/100)*barW, 4);
-    }
+
+    let bounce = Math.sin(walk) * 3;
+
+    ctx.save(); ctx.translate(x, y + bounce); ctx.scale(sc, sc);
+
+    if (gemCount > 0) { ctx.fillStyle = "#e056fd"; ctx.font = "bold 16px Arial"; ctx.fillText(`💎 ${gemCount}`, -15, -rad - 40); }
+
+    if (spr >= 100) { ctx.shadowBlur = 15; ctx.shadowColor = "#ffcc00"; ctx.strokeStyle = "#ffcc00"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, rad + 4, 0, Math.PI*2); ctx.stroke(); }
+
+    ctx.fillStyle = clr; ctx.beginPath(); ctx.arc(0, 0, rad + 2, 0, Math.PI*2); ctx.fill();
+
+    ctx.shadowBlur = 0; ctx.fillStyle = "white"; ctx.font = "24px Arial"; ctx.fillText(ico, -14, 10); ctx.restore();
+
+   
+
+    const barW = 70;
+
+    const barY = -rad - 30;
+
+    ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(x-35, y+barY + bounce, barW, 6);
+
+    ctx.fillStyle = hp/max > 0.3 ? "#2ecc71" : "#e74c3c"; ctx.fillRect(x-35, y+barY + bounce, Math.max(0, (hp/max)*barW), 6);
+
+    if (sc < 2) {
+
+        for(let i=0; i<3; i++) { ctx.fillStyle = i < ammo ? "#ff9f43" : "#333"; ctx.fillRect(x-35 + (i*24), y+barY+9 + bounce, 22, 4); }
+
+        ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(x-35, y+barY+15 + bounce, barW, 4);
+
+        ctx.fillStyle = spr >= 100 ? "#ffcc00" : "#f1c40f"; ctx.fillRect(x-35, y+barY+15 + bounce, (spr/100)*barW, 4);
+
+    }
+
 }
- 
+
+ 
+
 function draw() {
-    ctx.save();
-    if (screenShake > 0) { ctx.translate(rnd(-screenShake, screenShake), rnd(-screenShake, screenShake)); screenShake *= 0.88; }
-   
-    ctx.fillStyle = mapData[selectedMapId].bg;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
- 
-    if (selectedMode === 'GemGrab') {
-        ctx.fillStyle = "#2d1b38"; ctx.beginPath(); ctx.arc(475, 300, 30, 0, Math.PI*2); ctx.fill();
-        ctx.strokeStyle = "#a29bfe"; ctx.lineWidth = 4; ctx.stroke();
-        gems.forEach(g => {
-            ctx.shadowBlur = 10; ctx.shadowColor = "#e056fd";
-            ctx.fillStyle = "#e056fd"; ctx.beginPath(); ctx.arc(g.x, g.y + Math.sin(Date.now()/200)*3, 8, 0, Math.PI*2); ctx.fill();
-            ctx.shadowBlur = 0;
-        });
-    }
- 
-    walls.forEach(w => {
-        ctx.fillStyle = '#1e272e'; ctx.fillRect(w.x + 5, w.y + 10, w.w, w.h);
-        ctx.fillStyle = mapData[selectedMapId].wallColor; ctx.fillRect(w.x, w.y, w.w, w.h);
-        ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 4; ctx.strokeRect(w.x + 2, w.y + 2, w.w - 4, w.h - 4);
-    });
- 
-    staticZones.forEach(z => {
-        if (z.isSoundwave) {
-             ctx.strokeStyle = z.clr;
-             ctx.lineWidth = 4;
-             ctx.beginPath(); ctx.arc(z.x, z.y, z.r * (1 - z.life/10), 0, Math.PI*2); ctx.stroke();
-             ctx.beginPath(); ctx.arc(z.x, z.y, (z.r * 0.7) * (1 - z.life/10), 0, Math.PI*2); ctx.stroke();
-        } else {
-            ctx.fillStyle = z.clr; ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI*2); ctx.fill();
-        }
-    });
-   
-    particles.forEach(p => { ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size); });
-    slashes.forEach((s, i) => { ctx.strokeStyle = s.clr; ctx.lineWidth = 15; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, s.ang - 0.8, s.ang + 0.8); ctx.stroke(); s.life--; if (s.life <= 0) slashes.splice(i, 1); });
-   
-    [...projectiles, ...enemyProjectiles].forEach(b => {
-        if (b.isSquareThrow) {
-            // Draw visual shadow
-            ctx.fillStyle = "rgba(0,0,0,0.3)";
-            ctx.beginPath(); ctx.arc(b.x, b.y + 10, 8, 0, Math.PI*2); ctx.fill();
-           
-            // Calculate height for throw arc
-            let totalD = b.totalDist || 1;
-            let curD = Math.hypot(b.x - b.startX, b.y - b.startY);
-            let prog = curD / totalD;
-            let height = Math.sin(prog * Math.PI) * 50;
-            
-            ctx.fillStyle = b.clr;
-            ctx.fillRect(b.x - 6, (b.y - height) - 6, 12, 12);
-            
-            // Spin animation
-            ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth=2;
-            ctx.strokeRect(b.x - 6, (b.y - height) - 6, 12, 12);
-        } else if (b.shape === 'circle') {
-             // Draw Circle Projectile (Minion & Enemy Bot)
-             ctx.fillStyle = b.clr; ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, Math.PI*2); ctx.fill();
-             ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke();
-        } else {
-             // Standard Projectile
-             ctx.fillStyle = b.clr; ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, Math.PI*2); ctx.fill();
-        }
-    });
- 
-    // Draw Minions (Circle)
-    minions.forEach(m => {
-        drawEnt(m.x, m.y, m.color, m.hp, m.maxHp, "🟣", 0.8, 3, 0, 0, 0, m.r);
-    });
- 
-    const icons = {Shelly:'🤠',Primo:'🥊',Colt:'🔫',Poco:'🎸',Edgar:'🧣',Crow:'🐦',Mortis:'🦇',Piper:'☂️',Spike:'🌵',Emz:'🤳',AMAAN:'👑',Duck:'🦆', 'Case-Oh': '🍔', 'Square&Circle': '🟦', CUSTOM: customStats.icon};
-    drawEnt(bot.x, bot.y, bot.hitFlash > 0 ? "white" : (bot.poison > 0 ? "#2ecc71" : "#555"), bot.hp, bot.maxHp, "🤖", 1, 0, 0, bot.gemCount, bot.walkFrame, bot.r);
-    drawEnt(player.x, player.y, player.hitFlash > 0 ? "white" : player.clr, player.hp, player.maxHp, icons[selectedClass], player.isJumping ? 2.2 : 1, player.ammo, player.super, player.gemCount, player.walkFrame, player.r);
-   
-    floatingTexts.forEach((t, i) => { t.y += t.vy; t.life--; ctx.fillStyle = t.clr; ctx.font="bold 24px Arial"; ctx.fillText(t.text, t.x, t.y); if (t.life <= 0) floatingTexts.splice(i, 1); });
-    ctx.restore();
+
+    ctx.save();
+
+    if (screenShake > 0) { ctx.translate(rnd(-screenShake, screenShake), rnd(-screenShake, screenShake)); screenShake *= 0.88; }
+
+   
+
+    ctx.fillStyle = mapData[selectedMapId].bg;
+
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+ 
+
+    if (selectedMode === 'GemGrab') {
+
+        ctx.fillStyle = "#2d1b38"; ctx.beginPath(); ctx.arc(475, 300, 30, 0, Math.PI*2); ctx.fill();
+
+        ctx.strokeStyle = "#a29bfe"; ctx.lineWidth = 4; ctx.stroke();
+
+        gems.forEach(g => {
+
+            ctx.shadowBlur = 10; ctx.shadowColor = "#e056fd";
+
+            ctx.fillStyle = "#e056fd"; ctx.beginPath(); ctx.arc(g.x, g.y + Math.sin(Date.now()/200)*3, 8, 0, Math.PI*2); ctx.fill();
+
+            ctx.shadowBlur = 0;
+
+        });
+
+    }
+
+ 
+
+    walls.forEach(w => {
+
+        ctx.fillStyle = '#1e272e'; ctx.fillRect(w.x + 5, w.y + 10, w.w, w.h);
+
+        ctx.fillStyle = mapData[selectedMapId].wallColor; ctx.fillRect(w.x, w.y, w.w, w.h);
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 4; ctx.strokeRect(w.x + 2, w.y + 2, w.w - 4, w.h - 4);
+
+    });
+
+ 
+
+    staticZones.forEach(z => {
+
+        if (z.isSoundwave) {
+
+             ctx.strokeStyle = z.clr;
+
+             ctx.lineWidth = 4;
+
+             ctx.beginPath(); ctx.arc(z.x, z.y, z.r * (1 - z.life/10), 0, Math.PI*2); ctx.stroke();
+
+             ctx.beginPath(); ctx.arc(z.x, z.y, (z.r * 0.7) * (1 - z.life/10), 0, Math.PI*2); ctx.stroke();
+
+        } else {
+
+            ctx.fillStyle = z.clr; ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI*2); ctx.fill();
+
+        }
+
+    });
+
+   
+
+    particles.forEach(p => { ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size); });
+
+    slashes.forEach((s, i) => { ctx.strokeStyle = s.clr; ctx.lineWidth = 15; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, s.ang - 0.8, s.ang + 0.8); ctx.stroke(); s.life--; if (s.life <= 0) slashes.splice(i, 1); });
+
+   
+
+    [...projectiles, ...enemyProjectiles].forEach(b => {
+
+        if (b.isSquareThrow) {
+
+            // Draw visual shadow
+
+            ctx.fillStyle = "rgba(0,0,0,0.3)";
+
+            ctx.beginPath(); ctx.arc(b.x, b.y + 10, 8, 0, Math.PI*2); ctx.fill();
+
+           
+
+            // Calculate height for throw arc
+
+            let totalD = b.totalDist || 1;
+
+            let curD = Math.hypot(b.x - b.startX, b.y - b.startY);
+
+            let prog = curD / totalD;
+
+            let height = Math.sin(prog * Math.PI) * 50;
+
+            
+
+            ctx.fillStyle = b.clr;
+
+            ctx.fillRect(b.x - 6, (b.y - height) - 6, 12, 12);
+
+            
+
+            // Spin animation
+
+            ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth=2;
+
+            ctx.strokeRect(b.x - 6, (b.y - height) - 6, 12, 12);
+
+        } else if (b.shape === 'circle') {
+
+             // Draw Circle Projectile (Minion & Enemy Bot)
+
+             ctx.fillStyle = b.clr; ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, Math.PI*2); ctx.fill();
+
+             ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke();
+
+        } else {
+
+             // Standard Projectile
+
+             ctx.fillStyle = b.clr; ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, Math.PI*2); ctx.fill();
+
+        }
+
+    });
+
+ 
+
+    // Draw Minions (Circle)
+
+    minions.forEach(m => {
+
+        drawEnt(m.x, m.y, m.color, m.hp, m.maxHp, "🟣", 0.8, 3, 0, 0, 0, m.r);
+
+    });
+
+ 
+
+    const icons = {Shelly:'🤠',Primo:'🥊',Colt:'🔫',Poco:'🎸',Edgar:'🧣',Crow:'🐦',Mortis:'🦇',Piper:'☂️',Spike:'🌵',Emz:'🤳',AMAAN:'👑',Duck:'🦆', 'Case-Oh': '🍔', 'Square&Circle': '🟦', CUSTOM: customStats.icon};
+
+    drawEnt(bot.x, bot.y, bot.hitFlash > 0 ? "white" : (bot.poison > 0 ? "#2ecc71" : "#555"), bot.hp, bot.maxHp, "🤖", 1, 0, 0, bot.gemCount, bot.walkFrame, bot.r);
+
+    drawEnt(player.x, player.y, player.hitFlash > 0 ? "white" : player.clr, player.hp, player.maxHp, icons[selectedClass], player.isJumping ? 2.2 : 1, player.ammo, player.super, player.gemCount, player.walkFrame, player.r);
+
+   
+
+    floatingTexts.forEach((t, i) => { t.y += t.vy; t.life--; ctx.fillStyle = t.clr; ctx.font="bold 24px Arial"; ctx.fillText(t.text, t.x, t.y); if (t.life <= 0) floatingTexts.splice(i, 1); });
+
+    ctx.restore();
+
 }
- 
+
+ 
+
 function createFloatingText(x, y, text, clr) { floatingTexts.push({ x, y, text, clr, life: 40, vy: -2 }); }
+
 function gameLoop() { if (gameState === "PLAYING") { update(); draw(); animationId = requestAnimationFrame(gameLoop); } }
+
 window.onkeydown = (e) => { keys[e.key.toLowerCase()] = true; if (e.code === 'Space') { e.preventDefault(); triggerSuper(); } };
+
 window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
     </script>
   </body>
